@@ -2,11 +2,17 @@ import { app, clearScreens, el, esc } from '../ui/dom'
 import { setBg } from '../ui/stage'
 import { ITEMS } from '../core/content'
 
-const SLOTS = 5
+/** スマホ以外に選べる枠。SPEC §4(改訂: スマホ固定+8品から4枠) */
+const SLOTS = 4
+
+const LOCK_SVG =
+  '<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">' +
+  '<path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>' +
+  '<rect x="4" y="10" width="16" height="11" rx="2" fill="currentColor"/></svg>'
 
 export function nameScreen(): Promise<string> {
   clearScreens()
-  void setBg('house')
+  void setBg('room')
   return new Promise((resolve) => {
     const node = el(`
       <div class="screen pad">
@@ -22,10 +28,7 @@ export function nameScreen(): Promise<string> {
       </div>
     `)
     const input = node.querySelector('input') as HTMLInputElement
-    const done = () => {
-      const v = input.value.trim() || 'ソラ'
-      resolve(v)
-    }
+    const done = () => resolve(input.value.trim() || 'ソラ')
     node.querySelector('[data-act="ok"]')!.addEventListener('click', done)
     input.addEventListener('keydown', (e) => {
       if ((e as KeyboardEvent).key === 'Enter') done()
@@ -35,17 +38,21 @@ export function nameScreen(): Promise<string> {
   })
 }
 
-/** リュックに詰める。9品から5枠。ここが最初の賭場(SPEC.md §4)。 */
+/**
+ * リュックに詰める。ここが最初の賭場(SPEC §4)。
+ * スマホは並ぶが外せない——選べないのに一行説明があるのは、そのための表示。
+ * 将来この画面は「机にばらっと並んだ一枚絵」になる(items.json の spot が配置用)。
+ */
 export function packingScreen(): Promise<string[]> {
   clearScreens()
-  void setBg('house')
+  void setBg('room')
   return new Promise((resolve) => {
     const chosen = new Set<string>()
 
     const node = el(`
       <div class="screen pad" style="min-height:0">
-        <p class="head">リュックに、五つまで</p>
-        <p class="lead">「あっちで使うものだけ持っていきなよ」</p>
+        <p class="head">なにを持っていく?</p>
+        <p class="lead">リュックはひとつ。スマホのほかに、四つまで。</p>
         <div class="pack-list"></div>
         <div class="counter"></div>
         <button class="btn btn-primary" data-act="go" disabled>これで出発する</button>
@@ -58,20 +65,22 @@ export function packingScreen(): Promise<string[]> {
 
     for (const item of ITEMS) {
       const row = el(`
-        <div class="pack-item" data-id="${esc(item.id)}">
-          <div class="check"></div>
+        <div class="pack-item ${item.fixed ? 'fixed on' : ''}" data-id="${esc(item.id)}">
+          <div class="check">${item.fixed ? LOCK_SVG : ''}</div>
           <div>
-            <div class="nm">${esc(item.name)}</div>
+            <div class="nm">${esc(item.name)}${item.fixed ? '<span class="tagline">必ず持っていく</span>' : ''}</div>
             <div class="ds">${esc(item.desc)}</div>
           </div>
         </div>
       `)
-      row.addEventListener('click', () => {
-        if (chosen.has(item.id)) chosen.delete(item.id)
-        else if (chosen.size < SLOTS) chosen.add(item.id)
-        row.classList.toggle('on', chosen.has(item.id))
-        update()
-      })
+      if (!item.fixed) {
+        row.addEventListener('click', () => {
+          if (chosen.has(item.id)) chosen.delete(item.id)
+          else if (chosen.size < SLOTS) chosen.add(item.id)
+          row.classList.toggle('on', chosen.has(item.id))
+          update()
+        })
+      }
       list.appendChild(row)
     }
 

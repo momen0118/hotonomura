@@ -2,8 +2,17 @@ import './style.css'
 
 import { app, clearScreens, el, fadeThrough } from './ui/dom'
 import { currentBg, setBg } from './ui/stage'
-import { ITEMS, getDay, getPlace, initialPlaces, lockedPlace, resolveEvent } from './core/content'
-import { SLOT_ORDER, load, newGame, save } from './core/state'
+import {
+  ITEMS,
+  fixedItems,
+  getDay,
+  getEvent,
+  getPlace,
+  initialPlaces,
+  lockedPlace,
+  resolveEvent,
+} from './core/content'
+import { SLOT_ORDER, load, newGame, save, setLoadout } from './core/state'
 import type { GameState } from './core/types'
 import { titleScreen } from './screens/title'
 import { nameScreen, packingScreen } from './screens/packing'
@@ -17,15 +26,22 @@ async function main(): Promise<void> {
 
   let state: GameState | null = choice === 'continue' ? load() : null
   if (!state) {
+    // OP: 出発の朝。母の声 → 机の上から選ぶ → 母が日記帳を入れる。
     const name = await nameScreen()
-    const inventory = await packingScreen()
-    state = newGame(name, inventory, ITEMS.map((i) => i.id))
+    state = newGame(name, fixedItems())
     state.places = initialPlaces()
+
+    clearScreens()
+    await playScene(state, getEvent('op_morning'), { hud: false })
+
+    const chosen = await packingScreen()
+    setLoadout(state, chosen, ITEMS.map((i) => i.id))
+
+    clearScreens()
+    await playScene(state, getEvent('op_diary'), { hud: false })
     save(state)
-    await fadeThrough(async () => {
-      clearScreens()
-      await setBg('bus')
-    })
+
+    await fadeThrough(() => clearScreens())
   }
 
   // つづきから始めたときは背景がまだ無いので、とりあえず家にしておく。
@@ -71,8 +87,6 @@ async function gameLoop(state: GameState): Promise<void> {
       state.slot = SLOT_ORDER[i + 1]
       save(state)
     } else {
-      clearScreens()
-      await setBg('engawa_night')
       await writeNightPage(state)
       state.day += 1
       state.slot = 'morning'

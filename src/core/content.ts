@@ -6,6 +6,7 @@ import { hashString, mulberry32 } from './rng'
 import itemsJson from '../data/items.json'
 import placesJson from '../data/places.json'
 import daysJson from '../data/days.json'
+import namesJson from '../data/names.json'
 
 // イベントは日ごとのファイルに分けてある。増やすときはファイルを足すだけでよい。
 const eventModules = import.meta.glob<{ default: GameEvent[] }>('../data/events/*.json', {
@@ -25,6 +26,12 @@ export function getItem(id: string): Item | undefined {
 
 export function getPlace(id: string): Place | undefined {
   return PLACES.find((p) => p.id === id)
+}
+
+export function getEvent(id: string): GameEvent {
+  const ev = EVENTS.find((e) => e.id === id)
+  if (!ev) throw new Error(`イベントが見つかりません: ${id}`)
+  return ev
 }
 
 export function getDay(day: number): DayDef | undefined {
@@ -87,7 +94,20 @@ export function visibleLine(state: GameState, line: Line): boolean {
   return testCondition(state, line.if)
 }
 
-/** {{name}} を主人公の名前に置き換える */
+const NAMES = namesJson as unknown as Record<string, string>
+
+/**
+ * {{name}} を主人公の名前に、{{grandpa}} 等を names.json の差し込み表に置き換える。
+ * 固有名が未決のものは [祖父の名] のまま画面に出る(未決であることを隠さない)。
+ */
 export function fill(state: GameState, text: string): string {
-  return text.replace(/\{\{name\}\}/g, state.playerName)
+  return text.replace(/\{\{(\w+)\}\}/g, (whole, key: string) => {
+    if (key === 'name') return state.playerName
+    return NAMES[key] ?? whole
+  })
+}
+
+/** 必ず持っていく品(スマホ)。選択枠を消費しない */
+export function fixedItems(): string[] {
+  return ITEMS.filter((i) => i.fixed).map((i) => i.id)
 }

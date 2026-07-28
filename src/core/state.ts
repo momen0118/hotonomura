@@ -11,15 +11,15 @@ export const SLOT_LABEL: Record<Slot, string> = {
   evening: '夕',
 }
 
-export function newGame(playerName: string, inventory: string[], allItems: string[]): GameState {
+export function newGame(playerName: string, fixed: string[]): GameState {
   return {
     version: STATE_VERSION,
     playerName,
     loop: 1,
     day: 1,
     slot: 'morning',
-    inventory: [...inventory],
-    leftBehind: allItems.filter((id) => !inventory.includes(id)),
+    inventory: [...fixed],
+    leftBehind: [],
     sacrificed: [],
     places: [],
     diary: [],
@@ -30,6 +30,12 @@ export function newGame(playerName: string, inventory: string[], allItems: strin
     seed: Math.floor(Math.random() * 0x7fffffff),
     settings: { showDraftMarks: true, textSpeed: 22 },
   }
+}
+
+/** リュック詰めの結果を反映する。選外の品は村に来ない=供物にできない(SPEC §4)。 */
+export function setLoadout(state: GameState, chosen: string[], allItems: string[]): void {
+  for (const id of chosen) if (!state.inventory.includes(id)) state.inventory.push(id)
+  state.leftBehind = allItems.filter((id) => !state.inventory.includes(id))
 }
 
 export function save(state: GameState): void {

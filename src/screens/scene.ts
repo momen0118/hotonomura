@@ -9,18 +9,35 @@ interface Frame {
   i: number
 }
 
-/** 上部の 朝/昼/夕 インジケータ */
+/**
+ * 既読の行。読み返し用。セーブには含めない(その場のログ)。
+ * 台詞の鉤括弧は表示上つけない方針なので、ここでも話者名で区別する。
+ */
+const backlog: { speaker: string | null; text: string }[] = []
+const BACKLOG_MAX = 200
+
 function slotBar(state: GameState): string {
   const dots = SLOT_ORDER.map(
-    (s) => `<span class="dot ${SLOT_ORDER.indexOf(s) <= SLOT_ORDER.indexOf(state.slot) ? 'on' : ''}"></span>`,
+    (s) =>
+      `<span class="dot ${SLOT_ORDER.indexOf(s) <= SLOT_ORDER.indexOf(state.slot) ? 'on' : ''}"></span>`,
   ).join('')
-  return `<div class="slotbar"><span>${state.day}日目 ${SLOT_LABEL[state.slot]}</span>${dots}</div>`
+  return `
+    <div class="hud">
+      <div class="slotbar"><span>${state.day}日目 ${SLOT_LABEL[state.slot]}</span>${dots}</div>
+      <button class="dev-btn" data-act="log">履歴</button>
+    </div>
+  `
 }
 
-export async function playScene(state: GameState, ev: GameEvent): Promise<void> {
+export async function playScene(
+  state: GameState,
+  ev: GameEvent,
+  opts: { hud?: boolean } = {},
+): Promise<void> {
+  const hud = opts.hud !== false
   const scene = el(`
     <div class="scene">
-      ${slotBar(state)}
+      ${hud ? slotBar(state) : ''}
       <div class="textbox">
         <div class="speaker" hidden></div>
         <div class="body"></div>
@@ -29,6 +46,11 @@ export async function playScene(state: GameState, ev: GameEvent): Promise<void> 
     </div>
   `)
   app.appendChild(scene)
+
+  scene.querySelector('[data-act="log"]')?.addEventListener('click', (e) => {
+    e.stopPropagation()
+    openBacklog()
+  })
 
   const box = scene.querySelector('.textbox') as HTMLElement
   const speakerEl = scene.querySelector('.speaker') as HTMLElement
@@ -59,7 +81,8 @@ export async function playScene(state: GameState, ev: GameEvent): Promise<void> 
 
     if (line.choice) {
       const options = line.choice.filter(
-        (c) => visibleLine(state, { if: c.if }) && (!c.needItem || state.inventory.includes(c.needItem)),
+        (c) =>
+          visibleLine(state, { if: c.if }) && (!c.needItem || state.inventory.includes(c.needItem)),
       )
       if (options.length > 0) {
         const picked = await askChoice(state, scene, options)
@@ -87,16 +110,17 @@ function showText(
   line: Line,
 ): Promise<void> {
   const isTalk = line.t !== undefined
-  const raw = fill(state, (isTalk ? line.t : line.n) ?? '')
-  const text = isTalk && !line.thought ? `「${raw}」` : raw
+  // 鉤括弧は表示上つけない。話者名と文字色で地の文と区別する。
+  const text = fill(state, (isTalk ? line.t : line.n) ?? '')
+  const speaker = isTalk && line.c ? fill(state, line.c) : null
 
-  if (isTalk && line.c) {
-    speakerEl.hidden = false
-    speakerEl.textContent = fill(state, line.c)
-  } else {
-    speakerEl.hidden = true
-  }
+  speakerEl.hidden = speaker === null
+  if (speaker) speakerEl.textContent = speaker
+  bodyEl.classList.toggle('talk', isTalk && !line.thought)
   bodyEl.classList.toggle('thought', !!line.thought)
+
+  backlog.push({ speaker, text })
+  if (backlog.length > BACKLOG_MAX) backlog.shift()
 
   // 仮テキストの印。Fable の確定稿待ちが一目でわかるようにしておく(開発用)。
   box.querySelector('.draft-mark')?.remove()
@@ -124,6 +148,7 @@ function showText(
     }, Math.max(6, state.settings.textSpeed))
 
     const onTap = () => {
+      if (document.querySelector('.backlog')) return
       if (!done) {
         finish()
         return
@@ -147,7 +172,8 @@ function askChoice(state: GameState, scene: HTMLElement, options: ChoiceDef[]): 
   return new Promise((resolve) => {
     const wrap = el('<div class="choices"></div>')
     options.forEach((opt, i) => {
-      const mark = opt.draft && state.settings.showDraftMarks ? ' <span style="opacity:.5">〔仮〕</span>' : ''
+      const mark =
+        opt.draft && state.settings.showDraftMarks ? ' <span style="opacity:.5">〔仮〕</span>' : ''
       const b = el(`<button class="btn">${esc(fill(state, opt.label))}${mark}</button>`)
       b.addEventListener('click', async (e) => {
         e.stopPropagation()
@@ -159,4 +185,33 @@ function askChoice(state: GameState, scene: HTMLElement, options: ChoiceDef[]): 
     })
     scene.appendChild(wrap)
   })
+}
+
+/** 読み返し。1シーンの行数が増えたので、遡れる場所が要る。 */
+export function openBacklog(): void {
+  const rows = backlog
+    .map(
+      (b) =>
+        `<div class="log-row">${
+          b.speaker ? `<div class="log-speaker">${esc(b.speaker)}</div>` : ''
+        }<div class="log-text ${b.speaker ? 'talk' : ''}">${esc(b.text)}</div></div>`,
+    )
+    .join('')
+
+  const panel = el(`
+    <div class="backlog">
+      <div class="backlog-head">
+        <span class="head" style="margin:0">履歴</span>
+        <button class="dev-btn" data-act="close">とじる</button>
+      </div>
+      <div class="backlog-body">${rows || '<p class="hint">まだ何も読んでいない。</p>'}</div>
+    </div>
+  `)
+  panel.querySelector('[data-act="close"]')!.addEventListener('click', (e) => {
+    e.stopPropagation()
+    panel.remove()
+  })
+  app.appendChild(panel)
+  const body = panel.querySelector('.backlog-body') as HTMLElement
+  body.scrollTop = body.scrollHeight
 }

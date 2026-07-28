@@ -30,16 +30,21 @@ export function clearScreens(): void {
   }
 }
 
-/** 黒(または白)への暗転をはさむ */
-export async function fadeThrough(fn: () => void | Promise<void>, white = false): Promise<void> {
-  const f = el(`<div class="fade${white ? ' white' : ''}"></div>`)
+/** 黒(または白)への暗転をはさむ。ms は片道の長さ。 */
+export async function fadeThrough(
+  fn: () => void | Promise<void>,
+  opts: { white?: boolean; ms?: number } = {},
+): Promise<void> {
+  const ms = opts.ms ?? 520
+  const f = el(`<div class="fade${opts.white ? ' white' : ''}"></div>`)
+  f.style.transitionDuration = `${ms}ms`
   app.appendChild(f)
   await raf()
   f.classList.add('on')
-  await wait(520)
+  await wait(ms)
   await fn()
   await raf()
   f.classList.remove('on')
-  await wait(520)
+  await wait(ms)
   f.remove()
 }

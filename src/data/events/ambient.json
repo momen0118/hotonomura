@@ -1,86 +1,127 @@
 [
   {
-    "id": "amb_house_1",
+    "id": "amb_house_gomoku",
+    "kind": "ambient",
+    "place": "house",
+    "comment": "第1便・骨子。地の文は第2便待ち。日記行は確定稿。",
+    "script": [
+      { "bg": "house" },
+      { "n": "じいちゃんが、縁側で五目並べの盤を出していた。誘われたわけではない。座った。", "draft": true },
+      { "n": "一局目。二局目。三局目。", "draft": true },
+      { "n": "そのあいだ、じいちゃんは一度も喋らなかった。", "draft": true },
+      {
+        "diary": {
+          "fact": "じいちゃんに五目並べで三回負けた。無言だった。",
+          "tags": ["fun:gomoku"]
+        }
+      }
+    ]
+  },
+  {
+    "id": "amb_house_tsukemono",
     "kind": "ambient",
     "place": "house",
     "script": [
       { "bg": "house" },
-      { "n": "縁側に寝ころんだ。天井の木目が、顔に見える。", "draft": true },
-      { "n": "扇風機が、首を振って戻ってくる。", "draft": true }
+      { "n": "ばあちゃんが、小皿に漬物を出してきた。断る間もない。", "draft": true },
+      { "n": "なすが、異様にうまい。", "draft": true },
+      {
+        "diary": {
+          "fact": "なすの漬物がうまかった。都会のとちがう。",
+          "tags": ["fun:tsukemono"]
+        }
+      }
     ]
   },
   {
-    "id": "amb_house_2",
+    "id": "amb_house_mugicha",
     "kind": "ambient",
     "place": "house",
     "script": [
       { "bg": "house" },
-      { "n": "じいちゃんが、庭でなにか植えかえていた。手伝うか聞いたら、いいよと言われた。", "draft": true },
-      { "n": "麦茶が、やたら濃い。", "draft": true },
-      { "diary": { "text": "じいちゃんちの麦茶は濃い。", "draft": true, "tags": ["fun:mugicha"] } }
+      { "n": "縁側で麦茶を飲んだ。ヤカンごと冷やしてあるらしい。", "draft": true },
+      { "n": "氷が、コップに二個しか入らないでかさだった。", "draft": true },
+      { "diary": { "fact": "麦茶の氷がでかい。", "tags": ["fun:mugicha"] } }
     ]
   },
   {
-    "id": "amb_house_3",
-    "kind": "ambient",
-    "place": "house",
-    "script": [
-      { "bg": "house" },
-      { "if": "item:crystal", "n": "結晶キットの説明書を読む。毎日、決まった時間に水の温度を測るらしい。", "draft": true },
-      { "if": "item:crystal", "n": "瓶を窓際に置いた。それきりになった。", "draft": true },
-      { "if": "!item:crystal", "n": "することがない。畳の目を数えた。", "draft": true }
-    ]
-  },
-  {
-    "id": "amb_park_1",
+    "id": "amb_park_nukegara",
     "kind": "ambient",
     "place": "park",
     "script": [
       { "bg": "park" },
-      { "n": "公園の隅に、村の子が三人いた。こっちを見て、また自分たちの話に戻った。", "draft": true },
-      { "n": "寄ってはこない。", "draft": true }
+      { "n": "木の幹に、蝉の抜け殻がついていた。ひとつ取ると、隣にもあった。", "draft": true },
+      { "n": "電柱の、手の届かない高さにもついている。あれはどうやって登ったんだろう。", "draft": true },
+      { "diary": { "fact": "蝉のぬけがらを七個ひろった。", "tags": ["fun:nukegara"] } }
     ]
   },
   {
-    "id": "amb_park_2",
+    "id": "amb_park_kids",
     "kind": "ambient",
     "place": "park",
+    "comment": "Day 12決壊の前フリ。不穏5%厳守——「人見知りだな」で流せる濃度で。日記行なし(日記に書かれないランダムがあること自体が、白紙ページ仕様のテストにもなる)。",
     "script": [
       { "bg": "park" },
-      { "n": "誰もいない。ブランコが、風でもないのに少し揺れて、止まった。", "draft": true },
-      { "n": "蝉がうるさい。", "draft": true }
+      { "n": "公園の隅に、村の子が三人いた。", "draft": true },
+      { "n": "目が合った。遊びは続いている。視線だけが、外れた。", "draft": true }
     ]
   },
   {
-    "id": "amb_shop_1",
+    "id": "amb_shop_atari",
     "kind": "ambient",
     "place": "shop",
     "script": [
       { "bg": "shop" },
-      { "n": "おばちゃんが、氷を切っていた。かき氷の機械は、去年壊れたらしい。", "draft": true },
-      { "diary": { "text": "商店のかき氷機は壊れている。", "draft": true, "tags": ["fun:kakigori"] } }
+      { "n": "アイスを買った。棒に、字があった。", "draft": true },
+      { "c": "おばちゃん", "t": "え、当たり? 当たりじゃない! やだ、久しぶりに見た", "draft": true },
+      { "n": "おばちゃんのほうが騒いでいる。", "draft": true },
+      {
+        "diary": {
+          "fact": "アイスが当たった。おばちゃんの方がよろこんでた。",
+          "tags": ["fun:atari"]
+        }
+      }
     ]
   },
   {
-    "id": "amb_shop_2",
-    "kind": "ambient",
-    "place": "shop",
-    "script": [
-      { "bg": "shop" },
-      { "n": "店の奥に、棚がある。暗くて、何が置いてあるかまでは見えない。", "draft": true },
-      { "c": "おばちゃん", "t": "そっちは売り物じゃないよ", "draft": true }
-    ]
-  },
-  {
-    "id": "amb_river_1",
+    "id": "amb_river_mizukiri",
     "kind": "ambient",
     "place": "river",
+    "if": "met_natsu",
     "tags": ["place:river"],
     "script": [
       { "bg": "river" },
-      { "if": "met_taro", "n": "タロがいた。名前を呼ぶと、尻尾だけ振って、また水を見ている。", "draft": true },
-      { "if": "!met_taro", "n": "水が浅いところは、ぬるい。", "draft": true },
-      { "n": "石を投げた。三回跳ねた。自己ベストだ。", "draft": true }
+      { "n": "ナツが平たい石を選り分けていた。勝負ということらしい。", "draft": true },
+      { "n": "こっちは三回。ナツは九回はねた。", "draft": true },
+      {
+        "diary": {
+          "fact": "水切りで負けた。",
+          "feeling": "九回はねるのはずるい。",
+          "tags": ["fun:mizukiri"]
+        }
+      }
+    ]
+  },
+  {
+    "id": "amb_river_taro",
+    "kind": "ambient",
+    "place": "river",
+    "if": "met_taro",
+    "once": true,
+    "tags": ["place:river"],
+    "comment": "「会うたび挨拶(コマ消費なし)」の初回。コマを消費しない挨拶の仕組みは未実装。",
+    "script": [
+      { "bg": "river" },
+      { "n": "タロがいた。こっちを見て、しっぽが動いた。", "draft": true },
+      {
+        "comment": "生き物型。タロを捧げると、この行は丸ごと消える。「おぼえててくれた」が消えるのが本命。",
+        "diary": {
+          "fact": "タロがいた。",
+          "feeling": "おぼえててくれた。",
+          "tags": ["taro"],
+          "lost": "remove"
+        }
+      }
     ]
   }
 ]

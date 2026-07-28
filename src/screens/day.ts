@@ -51,7 +51,7 @@ export function placeSelect(state: GameState, slot: Slot): Promise<string> {
       if (!p) continue
       const b = el(`
         <button class="btn" data-place="${esc(id)}">
-          ${esc(p.name)}
+          ${esc(p.label)}
           ${p.hint ? `<span class="sub">${esc(p.hint)}</span>` : ''}
         </button>
       `)

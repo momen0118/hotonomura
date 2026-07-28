@@ -32,6 +32,8 @@ export interface Line {
   if?: string
   /** 選択肢 */
   choice?: ChoiceDef[]
+  /** データ側に残す覚え書き。表示されない */
+  comment?: string
   /** 場所の解放 */
   unlock?: string[]
   /** 持ち物の取得 */
@@ -50,9 +52,22 @@ export interface ChoiceDef {
   needItem?: string
 }
 
+/**
+ * 日記の一行。「日記の文法」(FABLE_ANSWERS.md)をそのまま構造にしてある。
+ * 事実文と感情文を分けて持つのは、黒塗りの効き方が両者で違うため。
+ */
 export interface DiaryEntryDef {
-  text: string
+  /** 事実文。供物対象の名前はここにだけ入れる(1文1タグ) */
+  fact: string
+  /** 感情文。タグも代名詞も持たない。黒塗り後、宛先のない感情だけが残る */
+  feeling?: string
   tags?: string[]
+  /**
+   * 捧げられたときの欠け方。
+   * redact = たこ焼き型: 事実文だけが黒く塗られ、感情文は残る(供物が物・体験)
+   * remove = 生き物型: 行が丸ごと消えて、その日が縮む(供物が生き物・人との関係)
+   */
+  lost?: 'redact' | 'remove'
   draft?: boolean
 }
 
@@ -83,6 +98,8 @@ export interface GameEvent {
 export interface Place {
   id: string
   name: string
+  /** 場所選択ボタンの文言。行動形に統一する(「家でごろごろ」「商店に行く」) */
+  label: string
   /** 場所選択の画面に出る一言 */
   hint?: string
   bg: string
@@ -98,6 +115,10 @@ export interface Item {
   /** 冒頭のリュック詰め画面に出る一行説明 */
   desc: string
   tags: string[]
+  /** 外せない品(スマホ)。並ぶが選択枠を消費しない */
+  fixed?: boolean
+  /** 将来の「机にばらっと並んだ一枚絵」でのホットスポット位置(%) */
+  spot?: { x: number; y: number }
   draft?: boolean
 }
 

@@ -2,12 +2,21 @@
   {
     "id": "bus",
     "name": "バスの中",
+    "label": "バスに乗る",
     "bg": "bus",
+    "initial": false
+  },
+  {
+    "id": "busstop",
+    "name": "バス停",
+    "label": "バス停に行く",
+    "bg": "busstop",
     "initial": false
   },
   {
     "id": "house",
     "name": "じいちゃんの家",
+    "label": "家でごろごろ",
     "hint": "縁側と、蚊取り線香のにおい。",
     "draft": true,
     "bg": "house",
@@ -16,6 +25,7 @@
   {
     "id": "shop",
     "name": "商店",
+    "label": "商店に行く",
     "hint": "村にひとつだけの店。",
     "draft": true,
     "bg": "shop",
@@ -24,6 +34,7 @@
   {
     "id": "park",
     "name": "公園",
+    "label": "公園に行く",
     "hint": "ブランコと、鉄棒と、あとは草。",
     "draft": true,
     "bg": "park",
@@ -32,6 +43,7 @@
   {
     "id": "river",
     "name": "川原",
+    "label": "川原に行く",
     "hint": "水が冷たい。",
     "draft": true,
     "bg": "river",
