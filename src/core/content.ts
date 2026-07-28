@@ -73,11 +73,35 @@ export function resolveEvent(state: GameState, day: number, slot: Slot, place: s
   ).filter(usable)
   if (fixed.length > 0) return fixed[0]
 
-  const ambient = EVENTS.filter((e) => e.kind === 'ambient' && e.place === place).filter(usable)
+  // 日常イベントは同じ弾を続けて出さない(同日重複禁止・2日クールダウン)
+  const fresh = EVENTS.filter((e) => e.kind === 'ambient' && e.place === place)
+    .filter(usable)
+    .filter((e) => {
+      const last = state.ambientLog[e.id]
+      return last === undefined || day - last >= 2
+    })
+  // 弾切れのときはクールダウンを無視する(何も起きないよりまし)
+  const ambient =
+    fresh.length > 0
+      ? fresh
+      : EVENTS.filter((e) => e.kind === 'ambient' && e.place === place).filter(usable)
   if (ambient.length === 0) return null
 
   const rnd = mulberry32(hashString(`${state.seed}:${state.loop}:${day}:${slot}:${place}`))
   return ambient[Math.floor(rnd() * ambient.length)]
+}
+
+/** そのコマの本編の手前に差し込む断片。条件を満たすものがあれば返す。 */
+export function resolvePrelude(state: GameState, place: string): GameEvent | null {
+  const found = EVENTS.filter(
+    (e) =>
+      e.kind === 'prelude' &&
+      e.place === place &&
+      !isLost(state, e.tags) &&
+      testCondition(state, e.if) &&
+      !(e.once && state.seenEvents.includes(e.id)),
+  )
+  return found[0] ?? null
 }
 
 /** その日のどこかに固定イベントが残っているか(縦切りの終端判定に使う) */

@@ -1,29 +1,17 @@
 [
   {
     "day": 1,
-    "date": "8/10",
-    "slots": {
-      "morning": { "locked": "bus" },
-      "noon": { "locked": "house" },
-      "evening": { "locked": "house" }
-    }
+    "date": "8月10日",
+    "slots": {"morning":{"locked":"bus"},"noon":{"locked":"house"},"evening":{"locked":"house"}}
   },
   {
     "day": 2,
-    "date": "8/11",
-    "slots": {
-      "morning": { "places": ["house", "park"] },
-      "noon": { "locked": "shop" },
-      "evening": { "places": ["house", "park"] }
-    }
+    "date": "8月11日",
+    "slots": {"morning":{"locked":"house"},"noon":{"locked":"shop"},"evening":{"locked":"shop"}}
   },
   {
     "day": 3,
-    "date": "8/12",
-    "slots": {
-      "morning": { "places": ["house", "shop", "park"] },
-      "noon": { "locked": "park" },
-      "evening": { "locked": "park" }
-    }
+    "date": "8月12日",
+    "slots": {"morning":{"locked":"park"},"noon":{"locked":"river"},"evening":{"locked":"park"}}
   }
 ]

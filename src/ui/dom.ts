@@ -22,10 +22,12 @@ export function raf(): Promise<void> {
   return new Promise((r) => requestAnimationFrame(() => r()))
 }
 
-/** 画面を片付ける(背景と確認用ボタンは残す) */
+const KEEP = ['stage', 'dev', 'fade', 'fatal']
+
+/** 画面を片付ける(背景・確認用ボタン・暗転幕・エラー表示は残す) */
 export function clearScreens(): void {
   for (const node of Array.from(app.children)) {
-    if (node.classList.contains('stage') || node.classList.contains('dev')) continue
+    if (KEEP.some((c) => node.classList.contains(c))) continue
     node.remove()
   }
 }

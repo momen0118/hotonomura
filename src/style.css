@@ -16,6 +16,11 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* display を持つクラスが hidden 属性に勝ってしまうのを防ぐ(話者名の残留対策) */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -392,12 +397,23 @@ body {
   background: var(--accent);
 }
 
+/* 現在地表示 */
+.here {
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  background: rgba(10, 14, 20, 0.55);
+  border-radius: 999px;
+  padding: 6px 12px;
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+}
+
 /* ---------------- 日付インタータイトル ---------------- */
 
 .interstitial {
   position: absolute;
   inset: 0;
-  z-index: 6;
+  z-index: 11;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -428,7 +444,8 @@ body {
 .diary-screen {
   position: absolute;
   inset: 0;
-  z-index: 6;
+  /* 確認用ボタン(z-index 7)より上。重なって「とじる」が押せなくなるのを防ぐ */
+  z-index: 10;
   background: #0a0a0c;
   display: flex;
   flex-direction: column;
@@ -518,10 +535,12 @@ body {
 .entries li::before {
   content: "・";
 }
-.entry-lost {
-  background: #14110d;
-  color: #14110d;
+/* 黒塗り。塗られるのは指定された語だけ。黒の面積が重さを語る。 */
+.ink {
+  color: #16130f;
+  background: #16130f;
   border-radius: 1px;
+  letter-spacing: -0.04em;
 }
 .entry-blank {
   opacity: 0.35;
@@ -724,6 +743,49 @@ body {
 }
 .log-text.talk {
   color: rgba(255, 255, 255, 0.94);
+}
+
+/* ---------------- 確認ダイアログ / エラー表示 ---------------- */
+
+.modal,
+.fatal {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 6, 10, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.modal-box {
+  background: rgba(16, 20, 26, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  padding: 20px;
+  max-width: 360px;
+  width: 100%;
+}
+.modal-msg {
+  font-size: 0.92rem;
+  line-height: 1.8;
+  margin: 0 0 16px;
+}
+
+.fatal-msg {
+  font-size: 0.72rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  padding: 10px;
+  margin: 12px 0;
+  max-height: 34vh;
+  overflow: auto;
+  user-select: text;
 }
 
 .fade {

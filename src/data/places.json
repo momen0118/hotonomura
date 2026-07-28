@@ -1,18 +1,6 @@
 [
-  {
-    "id": "bus",
-    "name": "バスの中",
-    "label": "バスに乗る",
-    "bg": "bus",
-    "initial": false
-  },
-  {
-    "id": "busstop",
-    "name": "バス停",
-    "label": "バス停に行く",
-    "bg": "busstop",
-    "initial": false
-  },
+  {"id":"bus","name":"バスの中","label":"バスに乗る","bg":"bus","initial":false},
+  {"id":"busstop","name":"バス停","label":"バス停に行く","bg":"busstop","initial":false},
   {
     "id": "house",
     "name": "じいちゃんの家",

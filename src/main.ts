@@ -11,8 +11,9 @@ import {
   initialPlaces,
   lockedPlace,
   resolveEvent,
+  resolvePrelude,
 } from './core/content'
-import { SLOT_ORDER, load, newGame, save, setLoadout } from './core/state'
+import { SLOT_ORDER, clearSave, load, newGame, save, setLoadout } from './core/state'
 import type { GameState } from './core/types'
 import { titleScreen } from './screens/title'
 import { nameScreen, packingScreen } from './screens/packing'
@@ -72,10 +73,19 @@ async function gameLoop(state: GameState): Promise<void> {
     const locked = lockedPlace(state.day, state.slot)
     const place = locked ?? (await placeSelect(state, state.slot))
     clearScreens()
+    const here = getPlace(place)?.name ?? ''
+
+    // コマの本編の手前に差し込む断片(体の記憶の空振りなど)
+    const prelude = resolvePrelude(state, place)
+    if (prelude) {
+      await playScene(state, prelude, { here })
+      if (!state.seenEvents.includes(prelude.id)) state.seenEvents.push(prelude.id)
+    }
 
     const event = resolveEvent(state, state.day, state.slot, place)
     if (event) {
-      await playScene(state, event)
+      await playScene(state, event, { here })
+      if (event.kind === 'ambient') state.ambientLog[event.id] = state.day
       if (event.once && !state.seenEvents.includes(event.id)) state.seenEvents.push(event.id)
     } else {
       // データがまだ無いコマ。縦切り中は起こりうるので、黙って一コマ進める。
@@ -146,4 +156,31 @@ async function sliceEnd(state: GameState): Promise<void> {
   app.appendChild(node)
 }
 
-void main()
+/**
+ * 止まったときに黙って固まらないようにする。
+ * アサが「ここで進めなくなった」を報告できるよう、文面を画面に出す。
+ */
+function showFatal(message: string): void {
+  if (document.querySelector('.fatal')) return
+  const node = el(`
+    <div class="fatal">
+      <div class="panel" style="max-width:420px;width:100%">
+        <p class="head">エラーが出て止まりました</p>
+        <p class="hint">この文面を見せてもらえれば直せます。</p>
+        <pre class="fatal-msg"></pre>
+        <button class="btn btn-primary" data-act="reset">セーブを消して最初から</button>
+      </div>
+    </div>
+  `)
+  ;(node.querySelector('.fatal-msg') as HTMLElement).textContent = message
+  node.querySelector('[data-act="reset"]')!.addEventListener('click', () => {
+    clearSave()
+    location.reload()
+  })
+  app.appendChild(node)
+}
+
+window.addEventListener('error', (e) => showFatal(e.message))
+window.addEventListener('unhandledrejection', (e) => showFatal(String(e.reason)))
+
+main().catch((e: unknown) => showFatal(e instanceof Error ? `${e.message}\n${e.stack ?? ''}` : String(e)))

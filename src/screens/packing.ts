@@ -51,7 +51,7 @@ export function packingScreen(): Promise<string[]> {
 
     const node = el(`
       <div class="screen pad" style="min-height:0">
-        <p class="head">なにを持っていく?</p>
+        <p class="head">なにを持っていく？</p>
         <p class="lead">リュックはひとつ。スマホのほかに、四つまで。</p>
         <div class="pack-list"></div>
         <div class="counter"></div>

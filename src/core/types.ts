@@ -18,6 +18,8 @@ export interface Line {
   bg?: string
   /** 画面全体の演出(white=白む, flash, shake など) */
   fx?: string
+  /** 画面上部の現在地表示を差し替える(「帰り道」「商店裏」など) */
+  here?: string
   /** この行が属するタグ。捧げられたタグを含む行は世界から消える */
   tags?: string[]
   /** Fable の確定稿待ちの仮テキスト */
@@ -59,15 +61,15 @@ export interface ChoiceDef {
 export interface DiaryEntryDef {
   /** 事実文。供物対象の名前はここにだけ入れる(1文1タグ) */
   fact: string
+  /**
+   * 捧げられたときに■化する文字列。データで明示指定する(推論しない)。
+   * たこ焼き型は対象語だけ、生き物型は名前+種別まで塗る——黒の面積が重さを語る。
+   * 行は消さない。日は縮まない(黒塗り規則v2)。
+   */
+  blackout?: string
   /** 感情文。タグも代名詞も持たない。黒塗り後、宛先のない感情だけが残る */
   feeling?: string
   tags?: string[]
-  /**
-   * 捧げられたときの欠け方。
-   * redact = たこ焼き型: 事実文だけが黒く塗られ、感情文は残る(供物が物・体験)
-   * remove = 生き物型: 行が丸ごと消えて、その日が縮む(供物が生き物・人との関係)
-   */
-  lost?: 'redact' | 'remove'
   draft?: boolean
 }
 
@@ -81,8 +83,12 @@ export interface PhotoDef {
 
 export interface GameEvent {
   id: string
-  /** fixed=固定イベント / ambient=その場所の何気ない日常 */
-  kind: 'fixed' | 'ambient'
+  /**
+   * fixed   = 固定イベント
+   * ambient = その場所の何気ない日常
+   * prelude = そのコマの本編の手前に差し込まれる短い断片(体の記憶の空振りなど)
+   */
+  kind: 'fixed' | 'ambient' | 'prelude'
   day?: number
   slot?: Slot
   place: string
@@ -166,6 +172,8 @@ export interface GameState {
   flags: Record<string, string | number | boolean>
   /** 消化済みイベント(once 用) */
   seenEvents: string[]
+  /** 日常イベントを最後に出した日。同じ弾を続けて出さないため */
+  ambientLog: Record<string, number>
   /** その日ぶんの日記の下書き。夜に1ページへまとめる */
   todayEntries: DiaryEntryDef[]
   todayPhoto: PhotoDef | null

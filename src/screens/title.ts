@@ -1,5 +1,6 @@
 import { app, clearScreens, el } from '../ui/dom'
 import { setBg } from '../ui/stage'
+import { askConfirm } from '../ui/confirm'
 import { hasSave } from '../core/state'
 
 export function titleScreen(): Promise<'new' | 'continue'> {
@@ -19,12 +20,16 @@ export function titleScreen(): Promise<'new' | 'continue'> {
         </div>
       </div>
     `)
-    node.addEventListener('click', (e) => {
+    node.addEventListener('click', async (e) => {
       const t = (e.target as HTMLElement).closest('[data-act]') as HTMLElement | null
       if (!t) return
       const act = t.dataset.act as 'new' | 'continue'
       if (act === 'new' && canContinue) {
-        if (!confirm('最初からはじめます。今のセーブは消えますが、いいですか?')) return
+        const ok = await askConfirm(
+          '最初からはじめます。今のセーブは消えますが、いいですか？',
+          'はじめから',
+        )
+        if (!ok) return
       }
       resolve(act)
     })

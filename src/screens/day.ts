@@ -38,7 +38,7 @@ export function placeSelect(state: GameState, slot: Slot): Promise<string> {
         <div class="slotbar" style="position:static;align-self:flex-start;margin-bottom:14px">
           <span>${state.day}日目 ${SLOT_LABEL[slot]}</span>${dots}
         </div>
-        <p class="head">どこへ行く?</p>
+        <p class="head">どこへ行く？</p>
         <div class="stack"></div>
         <div class="spacer"></div>
         <button class="btn" data-act="diary">日記を読む</button>

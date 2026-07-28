@@ -16,7 +16,7 @@ interface Frame {
 const backlog: { speaker: string | null; text: string }[] = []
 const BACKLOG_MAX = 200
 
-function slotBar(state: GameState): string {
+function slotBar(state: GameState, here: string): string {
   const dots = SLOT_ORDER.map(
     (s) =>
       `<span class="dot ${SLOT_ORDER.indexOf(s) <= SLOT_ORDER.indexOf(state.slot) ? 'on' : ''}"></span>`,
@@ -24,6 +24,7 @@ function slotBar(state: GameState): string {
   return `
     <div class="hud">
       <div class="slotbar"><span>${state.day}日目 ${SLOT_LABEL[state.slot]}</span>${dots}</div>
+      <div class="here" ${here ? '' : 'hidden'}>${esc(here)}</div>
       <button class="dev-btn" data-act="log">履歴</button>
     </div>
   `
@@ -32,12 +33,12 @@ function slotBar(state: GameState): string {
 export async function playScene(
   state: GameState,
   ev: GameEvent,
-  opts: { hud?: boolean } = {},
+  opts: { hud?: boolean; here?: string } = {},
 ): Promise<void> {
   const hud = opts.hud !== false
   const scene = el(`
     <div class="scene">
-      ${hud ? slotBar(state) : ''}
+      ${hud ? slotBar(state, opts.here ?? '') : ''}
       <div class="textbox">
         <div class="speaker" hidden></div>
         <div class="body"></div>
@@ -53,6 +54,7 @@ export async function playScene(
   })
 
   const box = scene.querySelector('.textbox') as HTMLElement
+  const hereEl = scene.querySelector('.here') as HTMLElement | null
   const speakerEl = scene.querySelector('.speaker') as HTMLElement
   const bodyEl = scene.querySelector('.body') as HTMLElement
   const nextEl = scene.querySelector('.next-mark') as HTMLElement
@@ -69,6 +71,10 @@ export async function playScene(
     if (!visibleLine(state, line)) continue
 
     if (line.bg) await setBg(line.bg)
+    if (line.here && hereEl) {
+      hereEl.textContent = line.here
+      hereEl.hidden = false
+    }
     if (line.set) applySet(state, line.set)
     if (line.unlock) {
       for (const p of line.unlock) if (!state.places.includes(p)) state.places.push(p)
@@ -114,8 +120,9 @@ function showText(
   const text = fill(state, (isTalk ? line.t : line.n) ?? '')
   const speaker = isTalk && line.c ? fill(state, line.c) : null
 
+  // 話者名は毎行かならず入れ替える。地の文・独白では空にして隠す(残留対策)
+  speakerEl.textContent = speaker ?? ''
   speakerEl.hidden = speaker === null
-  if (speaker) speakerEl.textContent = speaker
   bodyEl.classList.toggle('talk', isTalk && !line.thought)
   bodyEl.classList.toggle('thought', !!line.thought)
 

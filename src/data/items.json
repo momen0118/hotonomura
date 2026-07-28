@@ -4,63 +4,57 @@
     "name": "スマホ",
     "desc": "説明はいらないと思う。全部入ってる。",
     "fixed": true,
-    "spot": { "x": 50, "y": 30 },
+    "spot": {"x":50,"y":30},
     "tags": ["item:phone"]
   },
   {
     "id": "game",
     "name": "携帯ゲーム機",
     "desc": "『メゾン・ド・スライム』のランク戦シーズン中。今シーズンこそ金配管に上がりたい。",
-    "spot": { "x": 24, "y": 22 },
+    "spot": {"x":24,"y":22},
     "tags": ["item:game"]
   },
   {
     "id": "acryl",
     "name": "洞ヶ峠すいりのアクスタ",
     "desc": "写真には必ずすいりんを写す。それがファンってものだ。",
-    "spot": { "x": 74, "y": 20 },
+    "spot": {"x":74,"y":20},
     "tags": ["item:acryl"]
   },
   {
     "id": "book",
     "name": "読みかけの文庫",
     "desc": "しおりは202ページ。犯人はたぶんまだわからない。",
-    "spot": { "x": 20, "y": 52 },
+    "spot": {"x":20,"y":52},
     "tags": ["item:book"]
   },
-  {
-    "id": "band",
-    "name": "多機能腕バンド",
-    "desc": "探検にぜったい要る。",
-    "spot": { "x": 44, "y": 58 },
-    "tags": ["item:band"]
-  },
+  {"id":"band","name":"多機能腕バンド","desc":"探検にぜったい要る。","spot":{"x":44,"y":58},"tags":["item:band"]},
   {
     "id": "walkie",
     "name": "トランシーバー2台",
     "desc": "向こうで友達できたら使う。",
-    "spot": { "x": 70, "y": 50 },
+    "spot": {"x":70,"y":50},
     "tags": ["item:walkie"]
   },
   {
     "id": "crystal",
     "name": "結晶キット",
     "desc": "一週間で雪みたいになるらしい。どうせ暇だし、育ててみるか。",
-    "spot": { "x": 30, "y": 78 },
+    "spot": {"x":30,"y":78},
     "tags": ["item:crystal"]
   },
   {
     "id": "textbook",
     "name": "夏期講習テキスト",
     "desc": "母が勝手に入れた。開く予定はない。",
-    "spot": { "x": 58, "y": 82 },
+    "spot": {"x":58,"y":82},
     "tags": ["item:textbook"]
   },
   {
     "id": "watch",
     "name": "じいちゃんの腕時計",
     "desc": "なんとなく持ってると落ち着くから。",
-    "spot": { "x": 82, "y": 72 },
+    "spot": {"x":82,"y":72},
     "tags": ["item:watch"]
   }
 ]

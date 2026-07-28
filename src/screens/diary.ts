@@ -1,7 +1,7 @@
 import { app, clearScreens, el, esc, fadeThrough, wait } from '../ui/dom'
 import { setBg } from '../ui/stage'
 import { fill, getDay } from '../core/content'
-import { isLost, redact } from '../core/tags'
+import { blackout, isLost } from '../core/tags'
 import type { DiaryPage, GameState } from '../core/types'
 
 /**
@@ -14,21 +14,20 @@ export function renderPage(state: GameState, page: DiaryPage, writeIn = false): 
     ? `<div class="photo${photoLost ? ' lost' : ''}">${photoLost ? '' : esc(fill(state, page.photo.caption))}</div>`
     : ''
 
-  // 黒塗りの二型(FABLE_ANSWERS.md 日記の文法5)
-  //   たこ焼き型: 事実文だけが黒く塗られ、宛先を失った感情文が残る
-  //   生き物型  : 行が丸ごと消えて、その日が縮む
-  const rendered = page.entries
-    .map((e) => {
-      const lost = isLost(state, e.tags)
-      if (lost && e.lost === 'remove') return null
-      const fact = esc(fill(state, e.fact))
-      const factHtml = lost
-        ? `<span class="entry-lost">${esc(redact(fill(state, e.fact)))}</span>`
-        : fact
-      const feeling = e.feeling ? esc(fill(state, e.feeling)) : ''
-      return `<li>${factHtml}${feeling}</li>`
-    })
-    .filter((x): x is string => x !== null)
+  // 黒塗り規則v2: 行は消さない。日は縮まない。塗るのは指定された語だけ。
+  // たこ焼き型は対象語だけ、生き物型は名前+種別まで——黒の面積が重さを語る。
+  // 日記だけが正直で、世界と写真は素知らぬ顔をする。
+  const rendered = page.entries.map((e) => {
+    const factText = fill(state, e.fact)
+    const factHtml = isLost(state, e.tags)
+      ? esc(blackout(factText, e.blackout)).replace(
+          /■+/g,
+          (bar) => `<span class="ink">${bar}</span>`,
+        )
+      : esc(factText)
+    const feeling = e.feeling ? esc(fill(state, e.feeling)) : ''
+    return `<li>${factHtml}${feeling}</li>`
+  })
 
   const entries = rendered.length
     ? rendered.join('')

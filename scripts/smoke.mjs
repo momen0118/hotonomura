@@ -122,7 +122,22 @@ while (steps < 1200) {
   await page.waitForTimeout(150)
 }
 
-// 「捧げると世界と日記から一斉に欠ける」が効いているかを確認する。
+// 黒塗り規則v2: 行は消さない。日は縮まない。塗るのは指定された語だけ。
+const openDiaryFromDev = async () => {
+  await page.click('.dev button')
+  await page.waitForTimeout(300)
+  await page.click('.dev-panel [data-role="misc"] .btn')
+  await page.waitForTimeout(500)
+}
+
+await openDiaryFromDev()
+const before = {
+  lines: await page.$$eval('.entries li', (n) => n.length),
+  text: await page.$eval('.diary-screen', (n) => n.innerText),
+}
+await page.click('.diary-screen [data-act="close"]')
+await page.waitForTimeout(300)
+
 await page.click('.dev button')
 await page.waitForTimeout(300)
 for (const label of ['タロ', 'おまけのコーラ']) {
@@ -134,13 +149,19 @@ await page.click('.dev-panel [data-role="misc"] .btn')
 await page.waitForTimeout(600)
 await shot('92-diary-redacted')
 
-const redacted = await page.$$eval('.entry-lost', (n) => n.map((x) => x.textContent))
+const after = {
+  lines: await page.$$eval('.entries li', (n) => n.length),
+  text: await page.$eval('.diary-screen', (n) => n.innerText),
+}
+const inked = await page.$$eval('.ink', (n) => n.map((x) => x.textContent))
 const lostPhotos = await page.$$eval('.photo.lost', (n) => n.length)
-const bodyText = await page.$eval('.diary-screen', (n) => n.innerText)
 
-console.log('黒塗りされた行(たこ焼き型):', redacted)
+console.log('日記の行数 捧げる前/後:', before.lines, '/', after.lines)
+console.log('■化された語:', inked)
 console.log('糊の跡だけになった写真:', lostPhotos)
-console.log('「タロ」が本文に残っているか(生き物型なら消えているはず):', bodyText.includes('タロ'))
+console.log('「タロ」が本文に残っているか:', after.text.includes('タロ'))
+console.log('「コーラ」が本文に残っているか:', after.text.includes('コーラ'))
+console.log('「距離が近い。」の残存数:', (after.text.match(/距離が近い。/g) ?? []).length)
 console.log('steps:', steps)
 console.log('errors:', errors.length ? errors : 'none')
 await browser.close()
@@ -148,9 +169,12 @@ await browser.close()
 const fail = []
 if (steps >= 1200) fail.push('通しで終端に到達しませんでした')
 if (errors.length) fail.push('JSエラーあり')
-if (redacted.length === 0) fail.push('たこ焼き型の黒塗りが効いていません')
+if (before.lines !== after.lines) fail.push('行が消えている(v2では行は消さない)')
+if (inked.length === 0) fail.push('■化が効いていません')
 if (lostPhotos === 0) fail.push('写真の消失が効いていません')
-if (bodyText.includes('タロ')) fail.push('生き物型(行ごと消える)が効いていません')
+if (after.text.includes('タロ')) fail.push('生き物型の■化が漏れています')
+if (after.text.includes('コーラ')) fail.push('たこ焼き型の■化が漏れています')
+if (!after.text.includes('距離が近い。')) fail.push('感情文が残っていません')
 if (fail.length) {
   console.error('NG:', fail.join(' / '))
   process.exit(1)

@@ -1,6 +1,8 @@
 import { app, el, esc } from '../ui/dom'
-import { ITEMS, getItem } from '../core/content'
+import { askConfirm } from '../ui/confirm'
+import { EVENTS, ITEMS, getItem, getPlace } from '../core/content'
 import { clearSave } from '../core/state'
+import { playScene } from './scene'
 import { sacrifice } from '../core/tags'
 import type { GameState } from '../core/types'
 import tagLabels from '../data/tags.json'
@@ -43,6 +45,13 @@ function openDevPanel(state: GameState, onChange: () => void): void {
       </p>
       <div class="stack" data-role="tags"></div>
       <div style="height:20px"></div>
+      <h2>日常イベントを見る</h2>
+      <p class="hint" style="margin-bottom:10px">
+        Day 1〜3 はすべて固定イベントなので、日常イベントはまだ本編に出てきません。
+        ここから単体で確認できます(セーブや日記には影響しません)。
+      </p>
+      <div class="stack" data-role="ambients"></div>
+      <div style="height:20px"></div>
       <h2>表示</h2>
       <div class="stack" data-role="opts"></div>
       <div style="height:20px"></div>
@@ -79,6 +88,26 @@ function openDevPanel(state: GameState, onChange: () => void): void {
     tags.appendChild(row)
   }
 
+  const ambients = panel.querySelector('[data-role="ambients"]') as HTMLElement
+  for (const ev of EVENTS.filter((e) => e.kind === 'ambient' || e.kind === 'prelude')) {
+    const place = getPlace(ev.place)?.name ?? ev.place
+    const first = ev.script.find((l) => l.n || l.t)
+    const preview = (first?.n ?? first?.t ?? '').slice(0, 22)
+    const b = el(`
+      <button class="btn">${esc(place)}
+        <span class="sub">${esc(preview)}…</span>
+      </button>
+    `)
+    b.addEventListener('click', async () => {
+      panel.remove()
+      // 状態を複製して再生する。日記や所持品に影響を残さないため。
+      const sandbox = JSON.parse(JSON.stringify(state)) as GameState
+      await playScene(sandbox, ev, { hud: false })
+      openDevPanel(state, onChange)
+    })
+    ambients.appendChild(b)
+  }
+
   const opts = panel.querySelector('[data-role="opts"]') as HTMLElement
   const draftBtn = el(
     `<button class="btn">仮テキストの「仮」印: ${state.settings.showDraftMarks ? 'ON' : 'OFF'}</button>`,
@@ -111,11 +140,11 @@ function openDevPanel(state: GameState, onChange: () => void): void {
   misc.appendChild(diaryBtn)
 
   const resetBtn = el('<button class="btn">セーブを消して最初から</button>')
-  resetBtn.addEventListener('click', () => {
-    if (confirm('セーブを消して最初からやり直します。いいですか?')) {
-      clearSave()
-      location.reload()
-    }
+  resetBtn.addEventListener('click', async () => {
+    const ok = await askConfirm('セーブを消して最初からやり直します。いいですか？', '最初から')
+    if (!ok) return
+    clearSave()
+    location.reload()
   })
   misc.appendChild(resetBtn)
 
