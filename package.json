@@ -1,0 +1,24 @@
+{
+  "name": "hotonomura",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "穂戸野村(仮題)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "check": "tsc --noEmit",
+    "artifact": "vite build && node scripts/build-artifact.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:41729/git/momen0118/hotonomura"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "playwright": "^1.62.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.1.5",
+    "vite-plugin-singlefile": "^2.3.3"
+  }
+}

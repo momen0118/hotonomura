@@ -1,0 +1,94 @@
+[
+  {
+    "id": "d02_shop",
+    "kind": "fixed",
+    "day": 2,
+    "slot": "noon",
+    "place": "shop",
+    "script": [
+      { "bg": "shop" },
+      { "n": "引き戸を開けると、中は外より暗くて、少しだけ涼しかった。", "draft": true },
+      { "c": "おばちゃん", "t": "あら! あんた、ヨシ江さんとこの孫じゃろ", "draft": true },
+      { "n": "顔が近い。", "draft": true },
+      {
+        "choice": [
+          {
+            "label": "ラムネを買う",
+            "draft": true,
+            "set": { "d02_bought": "ramune" },
+            "lines": [
+              { "n": "ビー玉を落とすところで、手間取った。", "draft": true },
+              { "c": "おばちゃん", "t": "貸してみ", "draft": true },
+              {
+                "diary": {
+                  "text": "ラムネはビー玉を出そうとして失敗した。くやしい",
+                  "tags": ["fun:ramune"]
+                }
+              }
+            ]
+          },
+          {
+            "label": "アイスを買う",
+            "draft": true,
+            "set": { "d02_bought": "ice" },
+            "lines": [
+              { "n": "当たり付き。棒には、何も書いていなかった。", "draft": true },
+              {
+                "diary": {
+                  "text": "アイスは当たりじゃなかった。",
+                  "draft": true,
+                  "tags": ["fun:ice"]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      { "c": "おばちゃん", "t": "はい、これおまけ", "draft": true },
+      { "n": "コーラの瓶を持たされた。よく冷えている。", "draft": true },
+      { "c": "{{name}}", "t": "……ども", "draft": true },
+      { "n": "悪くないな、と思ってしまった。", "draft": true },
+      {
+        "diary": {
+          "text": "商店のおばちゃんがコーラをおまけしてくれた。",
+          "draft": true,
+          "tags": ["fun:cola"]
+        }
+      },
+      { "bg": "road" },
+      { "n": "帰り道。坂を上がったところで、後ろから足音がした。", "draft": true },
+      { "c": "???", "t": "都会の子でしょ! ナツでいいよ。なっちゃんでもいい!" },
+      { "c": "{{name}}", "t": "距離ちか・・", "thought": true },
+      {
+        "if": "item:phone",
+        "photo": {
+          "id": "d02_cola",
+          "caption": "手に持ったコーラの瓶。半分だけ写っている。",
+          "draft": true
+        }
+      },
+      {
+        "diary": {
+          "text": "ナツっていう子に会った。距離が近い。",
+          "draft": true,
+          "tags": ["natsu"]
+        }
+      },
+      { "set": { "met_natsu": true } }
+    ]
+  },
+  {
+    "id": "d02_house_morning",
+    "kind": "fixed",
+    "day": 2,
+    "slot": "morning",
+    "place": "house",
+    "script": [
+      { "bg": "house" },
+      { "n": "六時に目が覚めた。塾がある日より早い。", "draft": true },
+      { "n": "台所で、ばあちゃんがもう動いている。", "draft": true },
+      { "c": "ばあちゃん", "t": "散歩でも行っといで。なんもないけど", "draft": true },
+      { "diary": { "text": "朝、六時に目が覚めた。", "draft": true } }
+    ]
+  }
+]

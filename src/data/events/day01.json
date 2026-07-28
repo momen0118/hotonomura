@@ -1,0 +1,89 @@
+[
+  {
+    "id": "d01_bus",
+    "kind": "fixed",
+    "day": 1,
+    "slot": "morning",
+    "place": "bus",
+    "script": [
+      { "bg": "bus" },
+      { "n": "山。トンネル。抜けて、また山。", "draft": true },
+      { "n": "クーラーが効きすぎていて、腕だけが冷たい。", "draft": true },
+      { "c": "{{name}}", "t": "……まだ着かないの", "thought": true, "draft": true },
+      { "if": "item:phone", "n": "ポケットの中で、スマホが震えた。母だ。", "draft": true },
+      { "if": "item:phone", "c": "母", "t": "言い忘れたことあってさ、あのね——" },
+      { "if": "item:phone", "n": "ブツッ。" },
+      { "if": "item:phone", "c": "{{name}}", "t": "……もしもし? もしもし", "draft": true },
+      { "if": "item:phone", "n": "画面の左上が、圏外になっている。", "draft": true },
+      { "if": "item:phone", "set": { "mom_call_cut": true } },
+      { "n": "窓の外を、赤い柱が一瞬よぎった。", "draft": true },
+      { "n": "バスは、そのまま走っていく。", "draft": true },
+      { "n": "「穂戸野」。", "draft": true },
+      { "n": "降りたのは、{{name}}ひとりだった。", "draft": true },
+      {
+        "diary": { "text": "バスで二時間。ついた。", "draft": true }
+      }
+    ]
+  },
+  {
+    "id": "d01_house",
+    "kind": "fixed",
+    "day": 1,
+    "slot": "noon",
+    "place": "house",
+    "script": [
+      { "bg": "house" },
+      { "n": "じいちゃんとばあちゃんが、門の前まで出てきていた。", "draft": true },
+      { "c": "ばあちゃん", "t": "まあまあ、大きくなって", "draft": true },
+      { "c": "じいちゃん", "t": "よう来た", "draft": true },
+      {
+        "if": "!item:phone",
+        "n": "廊下の電話が鳴った。ばあちゃんが出て、二言、三言。",
+        "draft": true
+      },
+      {
+        "if": "!item:phone",
+        "c": "ばあちゃん",
+        "t": "あら、切れちゃった。お母さん、なんか言いかけてたけどねえ",
+        "draft": true
+      },
+      { "if": "!item:phone", "set": { "mom_call_cut": true } },
+      { "c": "{{name}}", "t": "ばあちゃん、ここ電波は?", "draft": true },
+      { "c": "ばあちゃん", "t": "auなら入るんだけどね〜、ドコモはだめ" },
+      { "c": "{{name}}", "t": "……うち、ドコモだ", "thought": true, "draft": true },
+      { "if": "item:game", "c": "{{name}}", "t": "……Wi-Fiは?", "draft": true },
+      { "if": "item:game", "c": "ばあちゃん", "t": "わいふぁい?", "draft": true },
+      {
+        "if": "item:game",
+        "n": "ランク戦は、今シーズンで終わる。ここには、繋がるものが一本もない。",
+        "draft": true
+      },
+      { "n": "通されたのは、二階の畳の部屋だった。荷物を置く。", "draft": true },
+      { "c": "{{name}}", "t": "……だる", "thought": true, "draft": true },
+      { "diary": { "text": "電波が入らない。", "draft": true } }
+    ]
+  },
+  {
+    "id": "d01_engawa",
+    "kind": "fixed",
+    "day": 1,
+    "slot": "evening",
+    "place": "house",
+    "script": [
+      { "bg": "engawa_night" },
+      { "n": "風呂から出たら、まだ八時だった。", "draft": true },
+      { "n": "縁側に座る。蚊取り線香のにおい。庭の向こうはもう真っ暗で、山との境目がわからない。", "draft": true },
+      { "n": "見上げる。", "draft": true },
+      { "c": "{{name}}", "t": "なんもない。……空だけやたら広い" },
+      {
+        "if": "item:phone",
+        "photo": {
+          "id": "d01_sky",
+          "caption": "縁側から撮った空。暗すぎて、ほとんど何も写っていない。",
+          "draft": true
+        }
+      },
+      { "diary": { "text": "なんもない。空だけやたら広い。", "draft": true } }
+    ]
+  }
+]

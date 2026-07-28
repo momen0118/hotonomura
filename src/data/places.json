@@ -1,0 +1,41 @@
+[
+  {
+    "id": "bus",
+    "name": "バスの中",
+    "bg": "bus",
+    "initial": false
+  },
+  {
+    "id": "house",
+    "name": "じいちゃんの家",
+    "hint": "縁側と、蚊取り線香のにおい。",
+    "draft": true,
+    "bg": "house",
+    "initial": true
+  },
+  {
+    "id": "shop",
+    "name": "商店",
+    "hint": "村にひとつだけの店。",
+    "draft": true,
+    "bg": "shop",
+    "initial": true
+  },
+  {
+    "id": "park",
+    "name": "公園",
+    "hint": "ブランコと、鉄棒と、あとは草。",
+    "draft": true,
+    "bg": "park",
+    "initial": true
+  },
+  {
+    "id": "river",
+    "name": "川原",
+    "hint": "水が冷たい。",
+    "draft": true,
+    "bg": "river",
+    "initial": false,
+    "tags": ["place:river"]
+  }
+]

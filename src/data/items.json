@@ -1,0 +1,60 @@
+[
+  {
+    "id": "game",
+    "name": "携帯ゲーム機",
+    "desc": "『メゾン・ド・スライム』のランク戦シーズン中。今シーズンこそ金配管に上がりたい。",
+    "tags": ["item:game"]
+  },
+  {
+    "id": "phone",
+    "name": "スマホ",
+    "desc": "写真も撮れるし、これがないと始まらない。",
+    "draft": true,
+    "tags": ["item:phone"]
+  },
+  {
+    "id": "acryl",
+    "name": "洞ヶ峠すいりのアクスタ",
+    "desc": "すいりんの新作は毎週金曜。連れてかないと落ち着かない。",
+    "draft": true,
+    "tags": ["item:acryl"]
+  },
+  {
+    "id": "book",
+    "name": "読みかけの文庫",
+    "desc": "しおりは202ページ。あと少しで終わる。",
+    "draft": true,
+    "tags": ["item:book"]
+  },
+  {
+    "id": "band",
+    "name": "多機能腕バンド",
+    "desc": "探検にぜったい要る。",
+    "tags": ["item:band"]
+  },
+  {
+    "id": "walkie",
+    "name": "トランシーバー2台",
+    "desc": "向こうで友達できたら使う。",
+    "tags": ["item:walkie"]
+  },
+  {
+    "id": "crystal",
+    "name": "結晶キット",
+    "desc": "一週間で雪みたいになる。",
+    "tags": ["item:crystal"]
+  },
+  {
+    "id": "textbook",
+    "name": "夏期講習テキスト",
+    "desc": "母が勝手に入れた。",
+    "draft": true,
+    "tags": ["item:textbook"]
+  },
+  {
+    "id": "watch",
+    "name": "じいちゃんの腕時計",
+    "desc": "なんとなく持ってると落ち着くから。",
+    "tags": ["item:watch"]
+  }
+]

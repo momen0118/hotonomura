@@ -1,0 +1,29 @@
+[
+  {
+    "day": 1,
+    "date": "8/10",
+    "slots": {
+      "morning": { "locked": "bus" },
+      "noon": { "locked": "house" },
+      "evening": { "locked": "house" }
+    }
+  },
+  {
+    "day": 2,
+    "date": "8/11",
+    "slots": {
+      "morning": { "places": ["house", "park"] },
+      "noon": { "locked": "shop" },
+      "evening": { "places": ["house", "park"] }
+    }
+  },
+  {
+    "day": 3,
+    "date": "8/12",
+    "slots": {
+      "morning": { "places": ["house", "shop", "park"] },
+      "noon": { "locked": "park" },
+      "evening": { "locked": "park" }
+    }
+  }
+]
