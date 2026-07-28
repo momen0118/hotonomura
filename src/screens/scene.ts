@@ -1,6 +1,7 @@
 import { app, el, esc, wait } from '../ui/dom'
 import { setBg } from '../ui/stage'
-import { fill, visibleLine } from '../core/content'
+import { fill, getEvent, visibleLine } from '../core/content'
+import { hashString, mulberry32 } from '../core/rng'
 import { applySet, SLOT_LABEL, SLOT_ORDER } from '../core/state'
 import type { ChoiceDef, GameEvent, GameState, Line } from '../core/types'
 
@@ -76,6 +77,18 @@ export async function playScene(
       hereEl.hidden = false
     }
     if (line.set) applySet(state, line.set)
+    if (line.roll) {
+      const rnd = mulberry32(hashString(`${state.seed}:${state.loop}:${line.roll.flag}`))
+      state.flags[line.roll.flag] = rnd() < line.roll.chance
+    }
+    if (line.money) state.money += line.money
+    if (line.include) {
+      const inc = getEvent(line.include)
+      // 差し込んだ側でも消化済みにする。でないと一度きりのイベントが後日また起きる。
+      if (inc.once && !state.seenEvents.includes(inc.id)) state.seenEvents.push(inc.id)
+      stack.push({ lines: inc.script, i: 0 })
+      continue
+    }
     if (line.unlock) {
       for (const p of line.unlock) if (!state.places.includes(p)) state.places.push(p)
     }

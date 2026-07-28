@@ -63,7 +63,8 @@ export function packingScreen(): Promise<string[]> {
     const counter = node.querySelector('.counter') as HTMLElement
     const go = node.querySelector('[data-act="go"]') as HTMLButtonElement
 
-    for (const item of ITEMS) {
+    // 村で手に入る品(ぽやぽや等)はここには並ばない
+    for (const item of ITEMS.filter((i) => !i.acquirable)) {
       const row = el(`
         <div class="pack-item ${item.fixed ? 'fixed on' : ''}" data-id="${esc(item.id)}">
           <div class="check">${item.fixed ? LOCK_SVG : ''}</div>

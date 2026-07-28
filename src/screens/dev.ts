@@ -7,6 +7,7 @@ import { sacrifice } from '../core/tags'
 import type { GameState } from '../core/types'
 import tagLabels from '../data/tags.json'
 import { openDiary } from './diary'
+import { offerScreen } from './offer'
 
 // 開発用。製品には出さない。
 // 「捧げると全域から欠ける」が本当に動いているかを、アサがその場で確認するためのもの。
@@ -18,6 +19,8 @@ function allTags(state: GameState): { tag: string; label: string }[] {
   // 村に持ってきた持ち物。捧げてリュックから消えたあとも、戻せるように一覧には残す。
   for (const item of ITEMS) {
     if (state.leftBehind.includes(item.id)) continue
+    // 村で手に入る品は、手に入れるまで並べない
+    if (item.acquirable && !state.inventory.includes(item.id)) continue
     rows.push({ tag: `item:${item.id}`, label: `持ち物: ${item.name}` })
   }
   return rows
@@ -47,8 +50,8 @@ function openDevPanel(state: GameState, onChange: () => void): void {
       <div style="height:20px"></div>
       <h2>日常イベントを見る</h2>
       <p class="hint" style="margin-bottom:10px">
-        Day 1〜3 はすべて固定イベントなので、日常イベントはまだ本編に出てきません。
-        ここから単体で確認できます(セーブや日記には影響しません)。
+        本編では自由コマ(2日目の昼から)でしか出ないので、ここから単体でも確認できます。
+        セーブや日記には影響しません。
       </p>
       <div class="stack" data-role="ambients"></div>
       <div style="height:20px"></div>
@@ -138,6 +141,19 @@ function openDevPanel(state: GameState, onChange: () => void): void {
     void openDiary(state)
   })
   misc.appendChild(diaryBtn)
+
+  const shrineBtn = el(`
+    <button class="btn">祠のページ破りを試す
+      <span class="sub">確認用。演出テキストは未納品なので、操作だけの骨組みです。</span>
+    </button>
+  `)
+  shrineBtn.addEventListener('click', async () => {
+    panel.remove()
+    await offerScreen(state, 'shrine')
+    onChange()
+    openDevPanel(state, onChange)
+  })
+  misc.appendChild(shrineBtn)
 
   const resetBtn = el('<button class="btn">セーブを消して最初から</button>')
   resetBtn.addEventListener('click', async () => {

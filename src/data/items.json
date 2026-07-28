@@ -56,5 +56,13 @@
     "desc": "なんとなく持ってると落ち着くから。",
     "spot": {"x":82,"y":72},
     "tags": ["item:watch"]
+  },
+  {
+    "id": "poyapoya",
+    "name": "ぽやぽやのぬいぐるみ",
+    "desc": "射的で取った。ナツとおそろい。なんの生き物かは、わからない。",
+    "draft": true,
+    "acquirable": true,
+    "tags": ["item:poyapoya"]
   }
 ]

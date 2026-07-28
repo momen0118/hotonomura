@@ -37,5 +37,16 @@
     "bg": "river",
     "initial": false,
     "tags": ["place:river"]
-  }
+  },
+  {
+    "id": "himawari",
+    "name": "ひまわり畑",
+    "label": "ひまわり畑に行く",
+    "hint": "背より高い。",
+    "draft": true,
+    "bg": "himawari",
+    "initial": false,
+    "tags": ["place:himawari"]
+  },
+  {"id":"matsuri","name":"広場","label":"広場に行く","bg":"matsuri","initial":false}
 ]

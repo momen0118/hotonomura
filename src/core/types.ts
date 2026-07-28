@@ -36,6 +36,12 @@ export interface Line {
   choice?: ChoiceDef[]
   /** データ側に残す覚え書き。表示されない */
   comment?: string
+  /** 別イベントの script をその場に差し込む(初回来店ブロックの共用など) */
+  include?: string
+  /** くじを引いてフラグを立てる。{"roll":{"flag":"hit","chance":0.5}} */
+  roll?: { flag: string; chance: number }
+  /** 所持金を増減する(祭りの屋台など) */
+  money?: number
   /** 場所の解放 */
   unlock?: string[]
   /** 持ち物の取得 */
@@ -59,8 +65,8 @@ export interface ChoiceDef {
  * 事実文と感情文を分けて持つのは、黒塗りの効き方が両者で違うため。
  */
 export interface DiaryEntryDef {
-  /** 事実文。供物対象の名前はここにだけ入れる(1文1タグ) */
-  fact: string
+  /** 事実文。供物対象の名前はここにだけ入れる(1文1タグ)。感情文だけの行では省略する */
+  fact?: string
   /**
    * 捧げられたときに■化する文字列。データで明示指定する(推論しない)。
    * たこ焼き型は対象語だけ、生き物型は名前+種別まで塗る——黒の面積が重さを語る。
@@ -77,6 +83,10 @@ export interface PhotoDef {
   id: string
   /** 写真の説明。絵ができるまではこの一行が写真の代わり */
   caption: string
+  /**
+   * そもそも撮らなかった日。糊の跡は残らない(捧げて消えた欠損と見分けがつくこと)。
+   */
+  none?: boolean
   tags?: string[]
   draft?: boolean
 }
@@ -98,6 +108,8 @@ export interface GameEvent {
   if?: string
   /** 一周のあいだ一度きり */
   once?: boolean
+  /** 絵の発注用メモ。実装対象ではない(データとして保持するだけ) */
+  art_note?: string
   script: Line[]
 }
 
@@ -123,6 +135,8 @@ export interface Item {
   tags: string[]
   /** 外せない品(スマホ)。並ぶが選択枠を消費しない */
   fixed?: boolean
+  /** 村で手に入る品。冒頭のリュック詰め画面には並ばない */
+  acquirable?: boolean
   /** 将来の「机にばらっと並んだ一枚絵」でのホットスポット位置(%) */
   spot?: { x: number; y: number }
   draft?: boolean
@@ -138,7 +152,19 @@ export interface DaySlotDef {
 export interface DayDef {
   day: number
   date: string
-  slots: Record<Slot, DaySlotDef>
+  /** 3コマ制の日。祭りの日は持たない */
+  slots?: Record<Slot, DaySlotDef>
+  /** イベント回。コマ制を崩し、一本道+屋台の自由回遊にする */
+  festival?: boolean
+}
+
+/** 祭りの屋台 */
+export interface Stall {
+  id: string
+  name: string
+  price: number
+  /** 再生するイベントID */
+  event: string
 }
 
 /** 日記の1ページ。周回をまたいで持ち越される(SPEC.md §3) */
@@ -151,6 +177,8 @@ export interface DiaryPage {
   entries: DiaryEntryDef[]
   /** プレイヤー(ソラ)が白紙に自分で書き足した行かどうか */
   handwritten?: boolean
+  /** 祠で破られたページ。紙は一枚で二ページぶんなので、綴じの反対側も一緒に抜ける */
+  torn?: boolean
 }
 
 export interface GameState {
@@ -174,6 +202,10 @@ export interface GameState {
   seenEvents: string[]
   /** 日常イベントを最後に出した日。同じ弾を続けて出さないため */
   ambientLog: Record<string, number>
+  /** 所持金(祭りの日に使う) */
+  money: number
+  /** 祭りで回った屋台 */
+  stallsVisited: string[]
   /** その日ぶんの日記の下書き。夜に1ページへまとめる */
   todayEntries: DiaryEntryDef[]
   todayPhoto: PhotoDef | null

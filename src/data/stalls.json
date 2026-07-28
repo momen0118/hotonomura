@@ -1,0 +1,10 @@
+[
+  {"id":"takoyaki","name":"たこ焼き","price":500,"event":"stall_takoyaki"},
+  {"id":"kakigori","name":"かき氷","price":400,"event":"stall_kakigori"},
+  {"id":"ringoame","name":"りんご飴","price":400,"event":"stall_ringoame"},
+  {"id":"corn","name":"焼きとうもろこし","price":500,"event":"stall_corn"},
+  {"id":"ramune","name":"ラムネ","price":300,"event":"stall_ramune"},
+  {"id":"kingyo","name":"金魚すくい","price":400,"event":"stall_kingyo"},
+  {"id":"yoyo","name":"ヨーヨー釣り","price":400,"event":"stall_yoyo"},
+  {"id":"shateki","name":"射的","price":600,"event":"stall_shateki"}
+]

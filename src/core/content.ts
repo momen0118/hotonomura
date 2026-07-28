@@ -1,4 +1,4 @@
-import type { DayDef, GameEvent, GameState, Item, Line, Place, Slot } from './types'
+import type { DayDef, GameEvent, GameState, Item, Line, Place, Slot, Stall } from './types'
 import { isLost } from './tags'
 import { testCondition } from './state'
 import { hashString, mulberry32 } from './rng'
@@ -7,6 +7,7 @@ import itemsJson from '../data/items.json'
 import placesJson from '../data/places.json'
 import daysJson from '../data/days.json'
 import namesJson from '../data/names.json'
+import stallsJson from '../data/stalls.json'
 
 // イベントは日ごとのファイルに分けてある。増やすときはファイルを足すだけでよい。
 const eventModules = import.meta.glob<{ default: GameEvent[] }>('../data/events/*.json', {
@@ -16,6 +17,7 @@ const eventModules = import.meta.glob<{ default: GameEvent[] }>('../data/events/
 export const ITEMS = itemsJson as Item[]
 export const PLACES = placesJson as Place[]
 export const DAYS = daysJson as DayDef[]
+export const STALLS = stallsJson as Stall[]
 export const EVENTS: GameEvent[] = Object.keys(eventModules)
   .sort()
   .flatMap((k) => eventModules[k].default)
@@ -44,7 +46,7 @@ export function initialPlaces(): string[] {
 
 /** その日そのコマで選べる場所。捧げられて消えた場所はそもそも並ばない。 */
 export function availablePlaces(state: GameState, day: number, slot: Slot): string[] {
-  const def = getDay(day)?.slots[slot]
+  const def = getDay(day)?.slots?.[slot]
   const ids = def?.places ?? state.places
   return ids
     .filter((id) => state.places.includes(id))
@@ -55,7 +57,7 @@ export function availablePlaces(state: GameState, day: number, slot: Slot): stri
 }
 
 export function lockedPlace(day: number, slot: Slot): string | null {
-  return getDay(day)?.slots[slot].locked ?? null
+  return getDay(day)?.slots?.[slot]?.locked ?? null
 }
 
 /**
@@ -72,6 +74,12 @@ export function resolveEvent(state: GameState, day: number, slot: Slot, place: s
     (e) => e.kind === 'fixed' && e.place === place && e.day === day && (!e.slot || e.slot === slot),
   ).filter(usable)
   if (fixed.length > 0) return fixed[0]
+
+  // トリガー型(日付を持たない固定イベント)。初回来店など、いつ来ても一度だけ起きる。
+  const trigger = EVENTS.filter(
+    (e) => e.kind === 'fixed' && e.place === place && e.day === undefined,
+  ).filter(usable)
+  if (trigger.length > 0) return trigger[0]
 
   // 日常イベントは同じ弾を続けて出さない(同日重複禁止・2日クールダウン)
   const fresh = EVENTS.filter((e) => e.kind === 'ambient' && e.place === place)

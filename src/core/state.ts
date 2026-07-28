@@ -27,6 +27,8 @@ export function newGame(playerName: string, fixed: string[]): GameState {
     flags: {},
     seenEvents: [],
     ambientLog: {},
+    money: 0,
+    stallsVisited: [],
     todayEntries: [],
     todayPhoto: null,
     seed: Math.floor(Math.random() * 0x7fffffff),
@@ -34,10 +36,31 @@ export function newGame(playerName: string, fixed: string[]): GameState {
   }
 }
 
-/** リュック詰めの結果を反映する。選外の品は村に来ない=供物にできない(SPEC §4)。 */
-export function setLoadout(state: GameState, chosen: string[], allItems: string[]): void {
+/**
+ * リュック詰めの結果を反映する。選外の品は村に来ない=供物にできない(SPEC §4)。
+ * 村で手に入る品(ぽやぽや等)は、選ばなかった品ではないので置いてきた扱いにしない。
+ */
+export function setLoadout(state: GameState, chosen: string[], packable: string[]): void {
   for (const id of chosen) if (!state.inventory.includes(id)) state.inventory.push(id)
-  state.leftBehind = allItems.filter((id) => !state.inventory.includes(id))
+  state.leftBehind = packable.filter((id) => !state.inventory.includes(id))
+}
+
+/**
+ * 巻き戻し(お代わり)。Day 1 に戻すが、日記と捧げたものは持ち越す。
+ * 持ち越さないもの: その周の進行フラグ、消化済みイベント、所持金。
+ */
+export function rewind(state: GameState, initialPlaces: string[]): void {
+  state.loop += 1
+  state.day = 1
+  state.slot = 'morning'
+  state.flags = {}
+  state.seenEvents = []
+  state.ambientLog = {}
+  state.todayEntries = []
+  state.todayPhoto = null
+  state.money = 0
+  state.stallsVisited = []
+  state.places = [...initialPlaces]
 }
 
 export function save(state: GameState): void {

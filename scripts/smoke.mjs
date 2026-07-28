@@ -36,7 +36,9 @@ await page.waitForTimeout(500)
 
 let steps = 0
 let packed = false
-while (steps < 1200) {
+let rewound = false
+const MAX_STEPS = 3000
+while (steps < MAX_STEPS) {
   steps++
 
   if (await page.$('.backlog')) {
@@ -52,7 +54,15 @@ while (steps < 1200) {
   }
 
   if (await page.$('[data-act="title"]')) {
-    await shot('90-slice-end')
+    if (!rewound) {
+      // 一周目の終わり。帰宅日→「なにを、おいていきますか」→巻き戻しを通す。
+      await shot('90-slice-end')
+      rewound = true
+      await page.click('[data-act="rewind"]')
+      await page.waitForTimeout(400)
+      continue
+    }
+    await shot('93-slice-end-loop2')
     break
   }
 
@@ -94,8 +104,35 @@ while (steps < 1200) {
   const places = await page.$$('.stack .btn[data-place]')
   if (places.length) {
     await once('place', '30-place-select')
-    await places[0].click()
+    await places[steps % places.length].click()
     await page.waitForTimeout(300)
+    continue
+  }
+
+  // 祭りの屋台えらび。買えるものから順に、なくなるまで回る。
+  const leave = await page.$('[data-act="leave"]')
+  if (leave) {
+    await once('stalls', '50-stalls')
+    const buyable = await page.$$('.stack .btn:not([disabled])')
+    if (buyable.length) {
+      await buyable[0].click()
+    } else {
+      await leave.click()
+    }
+    await page.waitForTimeout(300)
+    continue
+  }
+
+  // 「なにを、おいていきますか」。長押しで確定する。
+  const offer = await page.$('.offer-item')
+  if (offer) {
+    await once('offer', '60-offer')
+    const box = await offer.boundingBox()
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await page.mouse.down()
+    await page.waitForTimeout(1100)
+    await page.mouse.up()
+    await page.waitForTimeout(400)
     continue
   }
 
@@ -140,9 +177,14 @@ await page.waitForTimeout(300)
 
 await page.click('.dev button')
 await page.waitForTimeout(300)
+// 席料としてすでに捧げ済みのものを押すと、逆に手元へ戻ってしまう。まだ手元にあるものだけ押す。
 for (const label of ['タロ', 'おまけのコーラ']) {
-  await page.click(`.dev-tag:has-text("${label}")`)
-  await page.waitForTimeout(250)
+  const row = await page.$(`.dev-tag:has-text("${label}")`)
+  if (!row) continue
+  if ((await row.innerText()).includes('手元にある')) {
+    await row.click()
+    await page.waitForTimeout(250)
+  }
 }
 await shot('91-dev-panel')
 await page.click('.dev-panel [data-role="misc"] .btn')
@@ -162,12 +204,15 @@ console.log('糊の跡だけになった写真:', lostPhotos)
 console.log('「タロ」が本文に残っているか:', after.text.includes('タロ'))
 console.log('「コーラ」が本文に残っているか:', after.text.includes('コーラ'))
 console.log('「距離が近い。」の残存数:', (after.text.match(/距離が近い。/g) ?? []).length)
+for (const line of after.text.split('\n')) {
+  if (/コーラ|タロ/.test(line)) console.log('  残っている行:', JSON.stringify(line))
+}
 console.log('steps:', steps)
 console.log('errors:', errors.length ? errors : 'none')
 await browser.close()
 
 const fail = []
-if (steps >= 1200) fail.push('通しで終端に到達しませんでした')
+if (steps >= MAX_STEPS) fail.push('通しで終端に到達しませんでした')
 if (errors.length) fail.push('JSエラーあり')
 if (before.lines !== after.lines) fail.push('行が消えている(v2では行は消さない)')
 if (inked.length === 0) fail.push('■化が効いていません')

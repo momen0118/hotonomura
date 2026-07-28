@@ -9,22 +9,33 @@ import type { DiaryPage, GameState } from '../core/types'
  * 捧げられたタグを持つ行は消さずに黒く塗る。写真は糊の跡だけ残す(SPEC.md §3)。
  */
 export function renderPage(state: GameState, page: DiaryPage, writeIn = false): HTMLElement {
+  // 破られたページ。綴じに紙の縁だけが残る。
+  if (page.torn) {
+    return el(`
+      <div class="page torn">
+        <div class="page-date"><span>${page.day}日目　${esc(page.date)}</span></div>
+      </div>
+    `)
+  }
+
   const photoLost = page.photo ? isLost(state, page.photo.tags) : false
+  const photoClass = page.photo?.none ? ' none' : photoLost ? ' lost' : ''
   const photoHtml = page.photo
-    ? `<div class="photo${photoLost ? ' lost' : ''}">${photoLost ? '' : esc(fill(state, page.photo.caption))}</div>`
+    ? `<div class="photo${photoClass}">${photoLost ? '' : esc(fill(state, page.photo.caption))}</div>`
     : ''
 
   // 黒塗り規則v2: 行は消さない。日は縮まない。塗るのは指定された語だけ。
   // たこ焼き型は対象語だけ、生き物型は名前+種別まで——黒の面積が重さを語る。
   // 日記だけが正直で、世界と写真は素知らぬ顔をする。
   const rendered = page.entries.map((e) => {
-    const factText = fill(state, e.fact)
-    const factHtml = isLost(state, e.tags)
-      ? esc(blackout(factText, e.blackout)).replace(
-          /■+/g,
-          (bar) => `<span class="ink">${bar}</span>`,
-        )
-      : esc(factText)
+    const factText = e.fact ? fill(state, e.fact) : ''
+    const factHtml =
+      factText && isLost(state, e.tags)
+        ? esc(blackout(factText, e.blackout)).replace(
+            /■+/g,
+            (bar) => `<span class="ink">${bar}</span>`,
+          )
+        : esc(factText)
     const feeling = e.feeling ? esc(fill(state, e.feeling)) : ''
     return `<li>${factHtml}${feeling}</li>`
   })

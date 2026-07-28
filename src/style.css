@@ -132,6 +132,22 @@ body {
     radial-gradient(120% 62% at 50% 0%, rgba(206, 236, 255, 0.98), transparent 58%),
     linear-gradient(#8ec4e6 0%, #cfd6b4 56%, #8f8a63 100%);
 }
+.bg-himawari {
+  background:
+    radial-gradient(110% 46% at 50% 0%, rgba(198, 232, 255, 0.95), transparent 52%),
+    linear-gradient(#8cc4e8 0%, #e8c34a 38%, #d3a02c 66%, #5d7a34 100%);
+}
+.bg-matsuri {
+  /* 提灯の明かりで、ぜんぶの色がオレンジに寄る */
+  background:
+    radial-gradient(70% 40% at 50% 24%, rgba(255, 196, 120, 0.85), transparent 68%),
+    linear-gradient(#1a1620 0%, #3f2a24 46%, #23161a 100%);
+}
+.bg-shrine {
+  background:
+    radial-gradient(60% 34% at 50% 18%, rgba(255, 214, 154, 0.5), transparent 70%),
+    linear-gradient(#171519 0%, #2b2521 55%, #14110f 100%);
+}
 .bg-black {
   background: #000;
 }
@@ -699,6 +715,101 @@ body {
 .dev-tag.on {
   border-color: #b45c5c;
   background: rgba(180, 92, 92, 0.16);
+}
+
+/* ---------------- 財布(祭りの日) ---------------- */
+
+.wallet {
+  margin-left: auto;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  background: rgba(232, 196, 106, 0.18);
+  border: 1px solid rgba(232, 196, 106, 0.5);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+/* ---------------- 供物を選ぶ / ページを破る ---------------- */
+
+.offer-head {
+  max-width: 460px;
+  width: 100%;
+  margin: 0 auto 18px;
+  text-align: center;
+}
+.offer-title {
+  font-family: var(--font-serif);
+  font-size: 1.16rem;
+  letter-spacing: 0.16em;
+  margin: 0 0 8px;
+}
+.offer-body {
+  max-width: 460px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.offer-page {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* 長押しで確定する。押している時間が、そのまま逡巡になる。 */
+.offer-item {
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+}
+.offer-item .txt {
+  position: relative;
+  z-index: 1;
+}
+.offer-item .fill {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  background: rgba(180, 92, 92, 0.55);
+  transition: width 0ms linear;
+}
+.offer-item.pressing .fill {
+  width: 100%;
+  transition: width 900ms linear;
+}
+
+/* 破られたページ。綴じに紙の縁だけが残る。 */
+.page.torn {
+  min-height: 0;
+  padding: 14px 20px;
+  background: linear-gradient(90deg, var(--paper) 0 10%, rgba(245, 239, 226, 0.35) 34%, transparent 46%);
+  box-shadow: none;
+  clip-path: polygon(
+    0 0, 40% 0, 42% 6%, 38% 14%, 43% 22%, 39% 33%, 44% 44%, 38% 56%,
+    43% 68%, 39% 80%, 44% 90%, 40% 100%, 0 100%
+  );
+}
+.page.torn .page-date {
+  border-bottom: none;
+  margin-bottom: 0;
+  opacity: 0.5;
+}
+
+/* 撮らなかった日。糊の跡は出さない(捧げて消えた欠損と見分けがつくこと)。 */
+.photo.none {
+  background: none;
+  border: 1px dashed rgba(60, 50, 35, 0.22);
+  box-shadow: none;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  color: rgba(28, 26, 23, 0.55);
+  font-size: 0.76rem;
 }
 
 /* ---------------- 履歴 ---------------- */
