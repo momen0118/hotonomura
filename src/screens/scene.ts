@@ -1,4 +1,4 @@
-import { app, el, esc, wait } from '../ui/dom'
+import { app, el, esc, fadeThrough, wait } from '../ui/dom'
 import { setBg } from '../ui/stage'
 import { fill, getEvent, visibleLine } from '../core/content'
 import { openDiary } from './diary'
@@ -77,6 +77,7 @@ export async function playScene(
     if (!visibleLine(state, line)) continue
 
     if (line.bg) await setBg(line.bg)
+    if (line.fx === 'fade') await fadeThrough(() => {}, { ms: 500 })
     if (line.here && hereEl) {
       hereEl.textContent = line.here
       hereEl.hidden = false

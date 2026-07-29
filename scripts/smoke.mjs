@@ -220,19 +220,27 @@ if (await page.$('.diary-screen [data-act="close"]')) {
   await page.waitForTimeout(300)
 }
 
-// 再生中の scene(到着テキスト・焼いた翌朝テキスト)を最後まで読み飛ばすヘルパ。
-// .shrine ルートは焼却中も空のまま残るので、「.shrine が出るまで」ではなく「.scene が消えるまで」で待つ。
+// 再生中の scene(到着・決心・翌朝テキスト)を最後まで読み飛ばすヘルパ。
+// .shrine ルートは焼却中も空のまま残るので「.scene が消えるまで」で待つ。
+// 決心→(間)→翌朝 のように scene が途切れて再開するので、数回連続で空になるまで粘る。
 const clickThroughScenes = async () => {
-  for (let k = 0; k < 20; k++) {
+  let empties = 0
+  for (let k = 0; k < 60; k++) {
     const sc = await page.$('.scene')
-    if (!sc) break
-    await sc.click({ position: { x: 195, y: 300 } })
+    if (sc) {
+      empties = 0
+      await sc.click({ position: { x: 195, y: 300 } })
+    } else {
+      empties++
+      if (empties >= 4) break
+    }
     await page.waitForTimeout(180)
   }
   await page.waitForTimeout(300)
 }
 
-// 祠をひらいてページを1枚焼けるか(綴じの反対側も抜けるか)を確認する
+// 祠をひらいてページを1枚焼けるか(綴じの反対側も抜けるか)を確認する。
+// 一晩一件なので、焼くと祠は自動で閉じ、確認用パネルに戻る。
 await page.click('.dev button')
 await page.waitForTimeout(300)
 await page.click('.dev-panel .btn:has-text("祠をひらく")')
@@ -249,16 +257,12 @@ if (burn) {
   await page.waitForTimeout(1050)
   await page.mouse.up()
   await page.waitForTimeout(400)
-  await clickThroughScenes() // 焼いた翌朝テキスト
+  await clickThroughScenes() // 決心の独白→焼いた翌朝テキスト(祠は閉じる)
   await shot('71-shrine-burned')
-  // 祠を出て(ささげない→帰る)、日記側で焦げ縁ページを数える
-  await page.click('.shrine .offer-none')
-  await page.waitForTimeout(200)
-  await page.click('.shrine [data-act="leave"]')
-  await page.waitForTimeout(300)
+  // 焼くと祠は閉じてパネルに戻る。日記側で焦げ縁ページを数える。
   if (await page.$('.dev-panel')) {
     await page.click('.dev-panel .btn:has-text("日記を読む")')
-    await page.waitForTimeout(400)
+    await page.waitForTimeout(500)
     tornCount = await page.$$eval('.page.torn', (n) => n.length)
     await shot('72-diary-torn')
   }

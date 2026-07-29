@@ -56,7 +56,10 @@ export function rewind(state: GameState, initialPlaces: string[]): void {
   state.loop += 1
   state.day = 1
   state.slot = 'morning'
-  state.flags = {}
+  // 周をまたいで残す「ゲーム通算」フラグ(ever_*)だけ引き継ぐ。それ以外の進行フラグは白紙に戻す。
+  const kept: Record<string, string | number | boolean> = {}
+  for (const [k, v] of Object.entries(state.flags)) if (k.startsWith('ever_')) kept[k] = v
+  state.flags = kept
   state.seenEvents = []
   state.ambientLog = {}
   state.todayEntries = []

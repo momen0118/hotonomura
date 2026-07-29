@@ -79,6 +79,10 @@ export interface DiaryEntryDef {
   feeling?: string
   tags?: string[]
   draft?: boolean
+  /** 予記(固定イベント分)にない出来事を、後の周で余白に書き足した行(FABLE_ANSWERS_12 §1) */
+  handwritten?: boolean
+  /** その行が書かれた/書き足された周。ページ日付は固定でも、行は書かれた周に属する */
+  loop?: number
 }
 
 export interface PhotoDef {

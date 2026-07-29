@@ -37,6 +37,17 @@ const ARRIVE_LINES: Line[] = [
   { n: 'くぼみの黒が、前より濃いのかどうか、見るたびにわからなくなる。' },
 ]
 
+// 初回のページ破りの前に一度だけ出す決心の独白(FABLE_ANSWERS_12 §5.2)。
+const RESOLVE_LINES: Line[] = [
+  { n: '黒く塗られた日記と、紙の灰の残るくぼみ。' },
+  { n: 'つながっているのかは、わからない。' },
+  { n: 'でも、この村で紙を焼く場所を、ほかに知らない。' },
+  { n: 'ためしてみる。' },
+  { n: 'どのページなら、破けるか。' },
+  { n: '……どのページも、破きたくなかった。' },
+  { n: 'それでも、一枚。' },
+]
+
 /**
  * 祠の一覧(root)を隠したうえで、その上に scene を再生する。
  * root を DOM に残したまま playScene すると、空の祠パネルがタップを吸ってしまい、
@@ -60,8 +71,28 @@ export async function shrineScreen(state: GameState): Promise<void> {
       resolve()
     }
 
-    showBurnList(state, root, done)
+    // 一晩一件(FABLE_ANSWERS_12 §5.3)。今日すでに置いた日は、もう捧げられない。
+    if (state.flags.shrine_offer_day === state.day) showUsedToday(state, root, done)
+    else showBurnList(state, root, done)
   })
+}
+
+/** その日すでに一件置いたあとの祠。窪みはひとつ、一晩に一件。 */
+function showUsedToday(state: GameState, root: HTMLElement, done: () => void): void {
+  root.innerHTML = ''
+  root.appendChild(
+    el(`
+    <div class="offer-head">
+      <p class="offer-title">祠のまえ</p>
+      <p class="hint">今夜は、これでいい。窪みには、もう今夜のぶんがある。</p>
+    </div>
+  `),
+  )
+  const body = el('<div class="offer-body"></div>')
+  root.appendChild(body)
+  const leave = el('<button class="btn" data-act="leave">帰る</button>')
+  leave.addEventListener('click', done)
+  body.appendChild(leave)
 }
 
 /** 村の思い出のページ一覧。焼くと綴じの反対側も抜ける。 */
@@ -104,14 +135,24 @@ function showBurnList(state: GameState, root: HTMLElement, done: () => void): vo
   })
 }
 
-/** ページを焼く→翌朝の確認テキスト(値切り不成立・3段階)→一覧に戻る(FABLE_ANSWERS_11 §5)。 */
+/** ページを焼く→翌朝の確認テキスト(値切り不成立・3段階)。一晩一件なので、置いたら閉じる。 */
 async function burnFlow(state: GameState, index: number, root: HTMLElement, done: () => void): Promise<void> {
+  // 初回のページ破りの前に、決心の独白(§5.2)。
+  if (!state.flags.burn_resolved) {
+    state.flags.burn_resolved = true
+    await playShrineScene(state, root, RESOLVE_LINES)
+  }
   burnPage(state, index)
   const n = (Number(state.flags.burn_ack_count) || 0) + 1
   state.flags.burn_ack_count = n
+  // この周で焼いた回数(ナツの昔話の条件・12b §4)。2回以上で burns2。
+  const loopBurns = (Number(state.flags.loop_burns) || 0) + 1
+  state.flags.loop_burns = loopBurns
+  if (loopBurns >= 2) state.flags.burns2 = true
+  state.flags.shrine_offer_day = state.day // 一晩一件(§5.3)
   save(state)
   await playShrineScene(state, root, burnMorningLines(n).map((t) => ({ n: t })))
-  showBurnList(state, root, done)
+  done()
 }
 
 /** 焼いた回数が増えるほど短くなる=疲弊の表現。この短文化以外に疲弊の説明を足さない。 */
@@ -235,6 +276,7 @@ async function offerPhoneSplit(state: GameState, key: string, root: HTMLElement,
   state.exitOpen = true
   state.flags.stone_char = (Number(state.flags.stone_char) || 0) + 1
   lines.push({ n: ACCEPT_MORNING })
+  state.flags.shrine_offer_day = state.day // 一晩一件(§5.3)
   save(state)
   await playShrineScene(state, root, lines)
   done()
@@ -260,13 +302,11 @@ async function offerItem(state: GameState, item: Item, root: HTMLElement, done: 
     sacrifice(state, item.tags ?? [`item:${item.id}`])
   }
   // reject(夏期講習テキスト・結晶キット)は捧げない。実物は残り、出口も開かない。
+  state.flags.shrine_offer_day = state.day // 一晩一件(§5.3)。受理・非受理・村の水すべて当日を締める。
   save(state)
 
   await playShrineScene(state, root, lines)
-
-  // 受理されたら祠を出る。されなければ、また別の実物を試せる(値切りの一手)。
-  if (state.exitOpen) done()
-  else showBag(state, root, done)
+  done()
 }
 
 /** 一枚破ると、綴じの反対側も抜ける。紙は一枚で二ページぶんだから。 */

@@ -37,7 +37,7 @@
       {"n":"切り替えが、はやい。"},
       {"photo":{"id":"d12_kan","caption":"夕方の缶。へこんでる。","tags":["fun:kankeri"]}},
       {"diary":{"fact":"村の子と缶蹴りをした。ルールがちがった。","blackout":"缶蹴り","tags":["fun:kankeri"]}},
-      {"diary":{"fact":"鬼のとき、三回ぜんぶナツに蹴られた。","tags":["fun:kankeri"]}},
+      {"diary":{"fact":"鬼のとき、缶を三回ぜんぶ蹴られた。","blackout":"缶を三回ぜんぶ蹴られた","tags":["fun:kankeri"]}},
       {"diary":{"fact":"アイスは、どこにでもある。"}},
       {"diary":{"feeling":"楽しかった。"}}
     ]
