@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "check": "tsc --noEmit",
-    "artifact": "vite build && node scripts/build-artifact.mjs"
+    "artifact": "vite build && node scripts/build-artifact.mjs",
+    "pages": "vite build && node scripts/build-pages.mjs"
   },
   "repository": {
     "type": "git",

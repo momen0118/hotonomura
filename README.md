@@ -10,9 +10,12 @@
 
 遊ぶだけなら、このリンクを開けば動きます。何もインストールしなくていいです。スマホでも遊べます。
 
-**https://claude.ai/code/artifact/6f10449a-9535-4520-a678-7700ca3e6d81**
+**https://momen0118.github.io/hotonomura/**
 
-(更新するたび、同じリンクの中身が新しくなります)
+これは GitHub Pages(GitHub が無料でくれる、静的サイトの置き場)です。`docs/index.html`(1枚に固めた完成品)をそのまま配っています。
+
+- GitHub の設定は一度だけ: **Settings → Pages → Build and deployment → Source を「Deploy from a branch」、Branch を `main` の `/docs` にして Save**。数分で上のURLで遊べるようになります。
+- 中身を更新したいときは、ターミナルで `npm run pages` を実行 → `docs/index.html` が新しくなる → コミットして push。それで上のリンクの中身が入れ替わります(反映まで数分)。
 
 自分のPCで動かしたいときだけ、下を使ってください(ターミナル=黒い画面にコマンドを打つやつ)。
 
