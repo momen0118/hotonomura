@@ -49,5 +49,11 @@
     "day": 11,
     "date": "8月20日",
     "slots": {"morning":{"locked":"road"},"noon":{"locked":"teibou"},"evening":{"locked":"house"}}
-  }
+  },
+  {
+    "day": 12,
+    "date": "8月21日",
+    "slots": {"morning":{},"noon":{"locked":"shop"},"evening":{"locked":"park"}}
+  },
+  {"day":13,"date":"8月22日","slots":{"morning":{},"noon":{},"evening":{"locked":"himawari"}}}
 ]

@@ -220,11 +220,24 @@ if (await page.$('.diary-screen [data-act="close"]')) {
   await page.waitForTimeout(300)
 }
 
+// 再生中の scene(到着テキスト・焼いた翌朝テキスト)を最後まで読み飛ばすヘルパ。
+// .shrine ルートは焼却中も空のまま残るので、「.shrine が出るまで」ではなく「.scene が消えるまで」で待つ。
+const clickThroughScenes = async () => {
+  for (let k = 0; k < 20; k++) {
+    const sc = await page.$('.scene')
+    if (!sc) break
+    await sc.click({ position: { x: 195, y: 300 } })
+    await page.waitForTimeout(180)
+  }
+  await page.waitForTimeout(300)
+}
+
 // 祠をひらいてページを1枚焼けるか(綴じの反対側も抜けるか)を確認する
 await page.click('.dev button')
 await page.waitForTimeout(300)
 await page.click('.dev-panel .btn:has-text("祠をひらく")')
 await page.waitForTimeout(400)
+await clickThroughScenes() // 到着テキスト
 const shrineOpened = !!(await page.$('.shrine'))
 await shot('70-shrine')
 const burn = await page.$('.offer-item')
@@ -236,6 +249,7 @@ if (burn) {
   await page.waitForTimeout(1050)
   await page.mouse.up()
   await page.waitForTimeout(400)
+  await clickThroughScenes() // 焼いた翌朝テキスト
   await shot('71-shrine-burned')
   // 祠を出て(ささげない→帰る)、日記側で焦げ縁ページを数える
   await page.click('.shrine .offer-none')

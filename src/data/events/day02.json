@@ -30,7 +30,8 @@
     "script": [
       {"bg":"house","here":"じいちゃんの家"},
       {"c":"ばあちゃん","t":"{{name}}、悪いんだけど、お醤油買ってきて。ミッちゃんとこで、いつものって言えばわかるから。"},
-      {"if":"met_mitsuko","c":"{{name}}","t":"(……さっき言ってよ。)","thought":true},
+      {"c":"{{name}}","t":"(ミッちゃん……？)","thought":true},
+      {"n":"ミッちゃんが、あのおばちゃんのことだとわかったのは、店の前に着いてからだった。"},
       {"if":"met_mitsuko","bg":"shop","here":"商店"},
       {"if":"met_mitsuko","c":"おばちゃん","t":"あら、もう常連だ。"},
       {"if":"!met_mitsuko","include":"shop_intro"},

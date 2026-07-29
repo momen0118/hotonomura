@@ -2,7 +2,7 @@ import { app, clearScreens, el, esc } from '../ui/dom'
 import { getItem } from '../core/content'
 import { sacrifice } from '../core/tags'
 import { save } from '../core/state'
-import type { GameEvent, GameState, Item, Line } from '../core/types'
+import type { GameState, Item, Line } from '../core/types'
 import { renderPage } from './diary'
 import { playScene } from './scene'
 import offerLinesJson from '../data/offer_lines.json'
@@ -30,8 +30,27 @@ const ACCEPT_MORNING = (offerLinesJson as { _accept_morning: string })._accept_m
  */
 const PRESS_MS = 900
 
-export function shrineScreen(state: GameState): Promise<void> {
+// 到着時の定型テキスト(FABLE_ANSWERS_11 §5)。毎回出す。
+const ARRIVE_LINES: Line[] = [
+  { bg: 'shrine' },
+  { n: '祠は、今日も掃除されていた。' },
+  { n: 'くぼみの黒が、前より濃いのかどうか、見るたびにわからなくなる。' },
+]
+
+/**
+ * 祠の一覧(root)を隠したうえで、その上に scene を再生する。
+ * root を DOM に残したまま playScene すると、空の祠パネルがタップを吸ってしまい、
+ * 独白・翌朝テキストを送れなくなる。再生中だけ隠して、終わったら戻す。
+ */
+async function playShrineScene(state: GameState, root: HTMLElement, lines: Line[]): Promise<void> {
+  root.style.display = 'none'
+  await playScene(state, { id: 'shrine_seq', kind: 'fixed', place: 'shrine', script: lines }, { hud: false })
+  root.style.display = ''
+}
+
+export async function shrineScreen(state: GameState): Promise<void> {
   clearScreens()
+  await playScene(state, { id: 'shrine_arrive', kind: 'fixed', place: 'shrine', script: ARRIVE_LINES }, { hud: false })
   return new Promise((resolve) => {
     const root = el('<div class="diary-screen shrine"></div>')
     app.appendChild(root)
@@ -79,13 +98,31 @@ function showBurnList(state: GameState, root: HTMLElement, done: () => void): vo
         <span class="txt">このページを破る</span>
       </button>
     `)
-    longPress(btn, () => {
-      burnPage(state, i)
-      showBurnList(state, root, done)
-    })
+    longPress(btn, () => void burnFlow(state, i, root, done))
     wrap.appendChild(btn)
     body.appendChild(wrap)
   })
+}
+
+/** ページを焼く→翌朝の確認テキスト(値切り不成立・3段階)→一覧に戻る(FABLE_ANSWERS_11 §5)。 */
+async function burnFlow(state: GameState, index: number, root: HTMLElement, done: () => void): Promise<void> {
+  burnPage(state, index)
+  const n = (Number(state.flags.burn_ack_count) || 0) + 1
+  state.flags.burn_ack_count = n
+  save(state)
+  await playShrineScene(state, root, burnMorningLines(n).map((t) => ({ n: t })))
+  showBurnList(state, root, done)
+}
+
+/** 焼いた回数が増えるほど短くなる=疲弊の表現。この短文化以外に疲弊の説明を足さない。 */
+function burnMorningLines(n: number): string[] {
+  if (n === 1) {
+    return ['朝、たしかめに行った。', 'ページは、灰になっていた。', '石の焦げは、変わっていなかった。', 'なにも、変わっていなかった。']
+  }
+  if (n <= 3) {
+    return ['また、灰になっただけだった。', '神様がいるなら、味の感想くらい言ってほしい。']
+  }
+  return ['灰。', 'それだけ。']
 }
 
 /** 「ささげない」のあと。帰る、または(棚を見ていれば)リュックをあける。 */
@@ -125,11 +162,12 @@ function showBag(state: GameState, root: HTMLElement, done: () => void): void {
   const body = el('<div class="offer-body"></div>')
   root.appendChild(body)
 
-  // スマホ本体は捧げ候補ではない(分割=トーク履歴/音楽ライブラリは未実装)。差し出せる実物から外す。
+  // スマホ本体(カメラ=日記の機材)は差し出せない。選ぶと分割サブメニューへ(FABLE_ANSWERS_11 §1 Q2)。
+  const hasPhone = state.inventory.includes('phone') && !state.sacrificed.includes('item:phone')
   const items = state.inventory.filter(
     (id) => id !== 'phone' && !state.sacrificed.includes(`item:${id}`),
   )
-  if (items.length === 0) {
+  if (items.length === 0 && !hasPhone) {
     body.appendChild(el('<p class="hint" style="text-align:center">差し出せる実物がない。</p>'))
   }
   for (const id of items) {
@@ -145,9 +183,61 @@ function showBag(state: GameState, root: HTMLElement, done: () => void): void {
     body.appendChild(btn)
   }
 
+  if (hasPhone) {
+    // 本体は長押しで差し出せない。押すと「なにを置くか」を選ぶ。
+    const pbtn = el('<button class="btn">スマホ<span class="sub">本体は置けない。中身を選ぶ。</span></button>')
+    pbtn.addEventListener('click', () => showPhoneSplit(state, root, done))
+    body.appendChild(pbtn)
+  }
+
   const back = el('<button class="btn" data-act="back">やめる</button>')
   back.addEventListener('click', () => showExit(state, root, done))
   body.appendChild(back)
+}
+
+/** スマホの分割(トーク履歴/音楽ライブラリ)。本体は残る=世界同期なし。喪失はED文側で拾う。 */
+function showPhoneSplit(state: GameState, root: HTMLElement, done: () => void): void {
+  root.innerHTML = ''
+  root.appendChild(
+    el(`
+    <div class="offer-head">
+      <p class="offer-title">スマホの、なにを</p>
+      <p class="hint">本体は日記の機材だから、置けない。長押しで決まります。</p>
+    </div>
+  `),
+  )
+  const body = el('<div class="offer-body"></div>')
+  root.appendChild(body)
+
+  for (const part of [
+    { key: 'phone_talk', label: 'トーク履歴' },
+    { key: 'phone_music', label: '音楽ライブラリ' },
+  ]) {
+    const btn = el(`
+      <button class="btn offer-item">
+        <span class="fill"></span>
+        <span class="txt">${esc(part.label)}</span>
+      </button>
+    `)
+    longPress(btn, () => void offerPhoneSplit(state, part.key, root, done))
+    body.appendChild(btn)
+  }
+
+  const back = el('<button class="btn" data-act="back">やめる</button>')
+  back.addEventListener('click', () => showBag(state, root, done))
+  body.appendChild(back)
+}
+
+/** スマホの中身を一つ差し出す。受理=出口が開き石の焦げが濃くなる。本体・世界は変わらない。 */
+async function offerPhoneSplit(state: GameState, key: string, root: HTMLElement, done: () => void): Promise<void> {
+  const data = OFFER_LINES[key]
+  const lines: Line[] = (data?.lines ?? []).map((t) => ({ n: t }))
+  state.exitOpen = true
+  state.flags.stone_char = (Number(state.flags.stone_char) || 0) + 1
+  lines.push({ n: ACCEPT_MORNING })
+  save(state)
+  await playShrineScene(state, root, lines)
+  done()
 }
 
 /**
@@ -172,9 +262,7 @@ async function offerItem(state: GameState, item: Item, root: HTMLElement, done: 
   // reject(夏期講習テキスト・結晶キット)は捧げない。実物は残り、出口も開かない。
   save(state)
 
-  root.innerHTML = ''
-  const ev: GameEvent = { id: 'shrine_offer', kind: 'fixed', place: 'shrine', script: lines }
-  await playScene(state, ev, { hud: false })
+  await playShrineScene(state, root, lines)
 
   // 受理されたら祠を出る。されなければ、また別の実物を試せる(値切りの一手)。
   if (state.exitOpen) done()

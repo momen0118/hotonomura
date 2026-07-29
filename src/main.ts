@@ -29,7 +29,7 @@ import { devButton } from './screens/dev'
 // ナツが「今日いるか」を毎日抽選する(FABLE_ANSWERS_9 Q5)。
 // 基礎確率70%。ただしナツ必須の固定イベント日は強制で在。
 // 種は seed+loop+day から作るので、セーブ・再読み込みしても同じ日は同じ結果になる。
-const FORCED_NATSU_DAYS = new Set([2, 3, 4, 5, 6, 7, 11, 13])
+const FORCED_NATSU_DAYS = new Set([2, 3, 4, 5, 6, 7, 11, 12, 13])
 function decideNatsuToday(state: GameState): boolean {
   if (FORCED_NATSU_DAYS.has(state.day)) return true
   const rnd = mulberry32(hashString(`${state.seed}:${state.loop}:${state.day}:natsu`))
@@ -209,7 +209,7 @@ function sliceEnd(state: GameState): Promise<'rewind' | 'end'> {
       <div class="panel">
         <p class="head">ここまでが遊べるぶんです</p>
         <p class="hint">
-          十一日目まで。十二日目〜十三日目はこれから作ります。<br><br>
+          十三日目まで。十四日目(帰る日)はまだ仮で、この先で作ります。<br><br>
           台詞に「仮」の印が付いているところは、Fable の確定稿待ちです。
         </p>
       </div>
