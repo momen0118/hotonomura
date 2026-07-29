@@ -7,7 +7,7 @@ import { sacrifice } from '../core/tags'
 import type { GameState } from '../core/types'
 import tagLabels from '../data/tags.json'
 import { openDiary } from './diary'
-import { offerScreen } from './offer'
+import { shrineScreen } from './offer'
 
 // 開発用。製品には出さない。
 // 「捧げると全域から欠ける」が本当に動いているかを、アサがその場で確認するためのもの。
@@ -143,17 +143,31 @@ function openDevPanel(state: GameState, onChange: () => void): void {
   misc.appendChild(diaryBtn)
 
   const shrineBtn = el(`
-    <button class="btn">祠のページ破りを試す
-      <span class="sub">確認用。演出テキストは未納品なので、操作だけの骨組みです。</span>
+    <button class="btn">祠をひらく
+      <span class="sub">確認用。ページを焼く/リュックの実物を差し出す。演出テキストは仮です。</span>
     </button>
   `)
   shrineBtn.addEventListener('click', async () => {
     panel.remove()
-    await offerScreen(state, 'shrine')
+    await shrineScreen(state)
     onChange()
     openDevPanel(state, onChange)
   })
   misc.appendChild(shrineBtn)
+
+  // 「リュックをあける」は本来3周目に商店の奥の棚を見てから解禁される。確認用に手で立てる。
+  const shelfBtn = el(
+    `<button class="btn">商店の奥の棚フラグ: ${state.flags.shelf_seen ? 'ON' : 'OFF'}
+      <span class="sub">ONで祠に「リュックをあける」が出ます(実物を差し出せる)。</span>
+    </button>`,
+  )
+  shelfBtn.addEventListener('click', () => {
+    state.flags.shelf_seen = !state.flags.shelf_seen
+    onChange()
+    panel.remove()
+    openDevPanel(state, onChange)
+  })
+  misc.appendChild(shelfBtn)
 
   const resetBtn = el('<button class="btn">セーブを消して最初から</button>')
   resetBtn.addEventListener('click', async () => {

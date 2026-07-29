@@ -95,18 +95,21 @@ async function gameLoop(state: GameState): Promise<'rewind' | 'end'> {
     const locked = lockedPlace(state.day, state.slot)
     const place = locked ?? (await placeSelect(state, state.slot))
     clearScreens()
-    const here = getPlace(place)?.name ?? ''
+    const placeName = getPlace(place)?.name ?? ''
+    // イベント自身が here を切り替えるなら、初期表示は空にする(移動中に行き先がバレないように)
+    const initialHere = (ev: { script: { here?: string }[] } | null) =>
+      ev && ev.script.some((l) => l.here) ? '' : placeName
 
     // コマの本編の手前に差し込む断片(体の記憶の空振りなど)
     const prelude = resolvePrelude(state, place)
     if (prelude) {
-      await playScene(state, prelude, { here })
+      await playScene(state, prelude, { here: initialHere(prelude) })
       if (!state.seenEvents.includes(prelude.id)) state.seenEvents.push(prelude.id)
     }
 
     const event = resolveEvent(state, state.day, state.slot, place)
     if (event) {
-      await playScene(state, event, { here })
+      await playScene(state, event, { here: initialHere(event) })
       if (event.kind === 'ambient') state.ambientLog[event.id] = state.day
       if (event.once && !state.seenEvents.includes(event.id)) state.seenEvents.push(event.id)
     } else {

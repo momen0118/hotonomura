@@ -2,7 +2,7 @@ import type { GameState, Slot } from './types'
 
 const SAVE_KEY = 'hotonomura.save.v1'
 // データの形が変わったらここを上げる。古いセーブは読まずに捨てる。
-const STATE_VERSION = 2
+const STATE_VERSION = 3
 
 export const SLOT_ORDER: Slot[] = ['morning', 'noon', 'evening']
 
@@ -29,6 +29,9 @@ export function newGame(playerName: string, fixed: string[]): GameState {
     ambientLog: {},
     money: 0,
     stallsVisited: [],
+    harvested: [],
+    burned: [],
+    exitOpen: false,
     todayEntries: [],
     todayPhoto: null,
     seed: Math.floor(Math.random() * 0x7fffffff),

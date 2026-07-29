@@ -2,44 +2,31 @@ import { clearScreens, fadeThrough } from '../ui/dom'
 import { setBg } from '../ui/stage'
 import { getEvent, initialPlaces } from '../core/content'
 import { rewind, save } from '../core/state'
+import { harvest } from '../core/harvest'
 import type { GameState } from '../core/types'
 import { playScene } from './scene'
-import { offerScreen } from './offer'
 
 /**
- * 帰宅日 → 巻き戻し(SPEC §3)。
- * Day 14、帰りのバスに乗る → 車窓に鳥居 → 白む → Day 1 の車内。
- * 出られない場合、白む前に「なにを、おいていきますか」。
- * 最低一つ置かないと巻き戻れない(席料)。帰ろうとするたび失う。
+ * 帰宅日 → 巻き戻し(FABLE_ANSWERS_6 で全面改訂)。
  *
- * Day 8〜14の本文は未納品なので、いまは仮のダイジェストで通している。
+ * バスでは何も選ばせない。独白が「赤い柱がよぎって、」で切れたところで、
+ * 神が村で育った思い出を無音で収穫する(周回数ぶん、重い順)。演出もUIも出ない。
+ * 収穫の発覚は、二周目以降に日記を開いた瞬間だけ。バス車内には一切の示唆を置かない。
+ *
+ * 出口を開けるのは、祠で持ち込んだ実物を差し出したときだけ(§6)。ここではない。
+ * Day 8〜13の本文は未納品なので、いまは Day 7 のあとの確認用導線から入る。
  */
 export async function homecoming(state: GameState): Promise<void> {
   clearScreens()
   await playScene(state, getEvent('d14_home'), { here: 'バスの中' })
 
-  // 席料を払うまで先へ進めない
-  for (;;) {
-    const paid = await offerScreen(state, 'depart')
-    if (paid) break
-    // 置いていけるものが尽きている場合は、そのまま通す(値切りは祠の担当)
-    const anyLeft = state.diary.some(
-      (p) =>
-        !p.torn &&
-        p.entries.some(
-          (e) => e.tags && e.tags.length > 0 && !e.tags.some((t) => state.sacrificed.includes(t)),
-        ),
-    )
-    if (!anyLeft) break
-  }
-  save(state)
-
-  // 白む
+  // 白む前に、無音で収穫する。ここで日記を見せてはいけない。
   await fadeThrough(
     async () => {
-      clearScreens()
+      harvest(state)
       rewind(state, initialPlaces())
       save(state)
+      clearScreens()
       await setBg('bus')
     },
     { white: true, ms: 1200 },

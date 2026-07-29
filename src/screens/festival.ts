@@ -16,7 +16,7 @@ export async function festivalDay(state: GameState): Promise<void> {
   save(state)
 
   clearScreens()
-  await playScene(state, getEvent('d06_arrive'), { here: '広場' })
+  await playScene(state, getEvent('d06_arrive'), { here: '広場', time: '夜' })
   save(state)
 
   let shrineSeen = false
@@ -40,7 +40,7 @@ export async function festivalDay(state: GameState): Promise<void> {
     state.money -= picked.price
     state.stallsVisited.push(picked.id)
     clearScreens()
-    await playScene(state, getEvent(picked.event), { here: '広場' })
+    await playScene(state, getEvent(picked.event), { here: '広場', time: '夜' })
     save(state)
   }
 
@@ -60,15 +60,14 @@ function stallSelect(state: GameState, remaining: Stall[]): Promise<Stall | null
   return new Promise((resolve) => {
     const node = el(`
       <div class="screen pad">
-        <div class="hud" style="position:static;margin-bottom:14px;padding-right:70px">
+        <div class="hud" style="position:static;margin-bottom:12px;padding-right:70px">
           <div class="slotbar"><span>6日目 夜</span></div>
           <div class="here">広場</div>
           <div class="wallet">${state.money}円</div>
         </div>
-        <p class="head">どこに寄る？</p>
-        <div class="stack"></div>
-        <div class="spacer"></div>
-        <button class="btn" data-act="leave">もう帰る</button>
+        <p class="head" style="margin-bottom:10px">どこに寄る？</p>
+        <div class="stack scrolls"></div>
+        <button class="btn" data-act="leave" style="margin-top:10px">もう帰る</button>
       </div>
     `)
 

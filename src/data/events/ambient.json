@@ -193,16 +193,123 @@
     ]
   },
   {
-    "id": "amb_himawari_1",
+    "id": "amb_house_watch",
+    "kind": "ambient",
+    "place": "house",
+    "if": "item:watch",
+    "once": true,
+    "comment": "腕時計所持周回のみ・一度きり。茂に「いいもん持ってるな」を言わせないこと(ナツ/ツリさんの対の構文なので薄めない)。",
+    "script": [
+      {"bg":"house"},
+      {"n":"縁側で、腕時計のねじを巻いていた。"},
+      {"n":"巻かないと止まる時計だと、持ってくる前に母に教わった。"},
+      {"n":"気づいたら、じいちゃんが隣で見ていた。"},
+      {"c":"茂","t":"……手入れ、してるのか。"},
+      {"c":"{{name}}","t":"母さんのほうの、じいちゃんの。"},
+      {"c":"茂","t":"…………そうか。"},
+      {"n":"じいちゃんは、それ以上聞かなかった。"},
+      {"n":"立ち上がるときに、ひとこと。"},
+      {"c":"茂","t":"……動いてるうちは、大事にな。"},
+      {"diary":{"fact":"じいちゃんが、じいちゃんの時計をほめた。","blackout":"じいちゃんの時計","tags":["fun:watch"]}}
+    ]
+  },
+  {
+    "id": "amb_park_radio",
+    "kind": "ambient",
+    "place": "park",
+    "slot": "morning",
+    "art_note": "列の人数は将来、周回の支払い状況と連動して減らす。人数はデータで持つこと。",
+    "script": [
+      {"bg":"park"},
+      {"n":"朝の公園に、ラジオ体操の列があった。"},
+      {"n":"子どもと、大人と、おばあちゃんたち。"},
+      {"n":"端に混ざったら、となりのおばあちゃんが判子をくれた。"},
+      {"n":"カードは、持っていないのに。"},
+      {"diary":{"fact":"ラジオ体操に混ざった。判子だけもらった。","blackout":"ラジオ体操","tags":["fun:radio"]}}
+    ]
+  },
+  {
+    "id": "amb_park_yuyake",
+    "kind": "ambient",
+    "place": "park",
+    "slot": "evening",
+    "script": [
+      {"bg":"park_evening"},
+      {"n":"夕方の公園から見た空が、ぜんぶオレンジだった。"},
+      {"n":"都会の夕焼けより、面積が広い。"},
+      {"n":"理由はわかる。さえぎるものがないからだ。"},
+      {"n":"わかるけど、すごいものはすごい。"},
+      {"diary":{"fact":"公園で夕焼けを見た。","blackout":"夕焼け","feeling":"すごかった。","tags":["fun:yuyake"]}}
+    ]
+  },
+  {
+    "id": "amb_park_semi",
+    "kind": "ambient",
+    "place": "park",
+    "script": [
+      {"bg":"park"},
+      {"n":"むこうの木で、村の子が蝉を素手で捕っていた。"},
+      {"n":"近づく。とまる。かぶせる。三秒だった。"},
+      {"n":"網より速い素手が、この世にはある。"}
+    ]
+  },
+  {
+    "id": "amb_river_ishizumi",
+    "kind": "ambient",
+    "place": "river",
+    "tags": ["place:river"],
+    "script": [
+      {"bg":"river"},
+      {"n":"平らな石を選んで、積んだ。六段で崩れた。"},
+      {"n":"少し上流に、誰かが先に積んだ塔があった。"},
+      {"n":"九段だった。負けた。"},
+      {"diary":{"fact":"石積みで、知らないだれかに負けた。","blackout":"石積み","tags":["fun:ishizumi"]}}
+    ]
+  },
+  {
+    "id": "amb_river_kataashi",
+    "kind": "ambient",
+    "place": "river",
+    "tags": ["place:river"],
+    "script": [
+      {"bg":"river"},
+      {"n":"濡れないように跳んだ石が、動いた。"},
+      {"n":"右足だけ、川に落ちた。"},
+      {"n":"靴は夕方まで乾かなかった。片足だけ、ずっと重かった。"},
+      {"diary":{"fact":"川で右足だけぬれた。","blackout":"川","feeling":"最悪。","tags":["fun:kawa"]}}
+    ]
+  },
+  {
+    "id": "amb_river_sasabune",
+    "kind": "ambient",
+    "place": "river",
+    "tags": ["place:river"],
+    "comment": "「手が知っていた」は一周目では母に習った等の含みで通る。多周目基準では体の記憶とも読める。説明はどちらにも寄せない。",
+    "script": [{"bg":"river"},{"n":"笹の葉で舟を折って、流した。"},{"n":"折り方は、なんとなく手が知っていた。"},{"n":"舟は、曲がり角で沈んだ。"}]
+  },
+  {
+    "id": "amb_himawari_hachi",
     "kind": "ambient",
     "place": "himawari",
     "tags": ["place:himawari"],
-    "comment": "ひまわり畑は Day 5 で行き先として解放されるのに、日常イベントの弾が一本もなかったので仮で置いてある。確定稿が来たら差し替える。",
     "script": [
       {"bg":"himawari"},
-      {"n":"ひとりで来ると、道の幅がもっと狭く感じた。","draft":true},
-      {"n":"ひまわりは、こっちを見ていない。","draft":true},
-      {"n":"日陰がどこにもないので、五分で引き返した。","draft":true}
+      {"n":"ひまわりには、蜂がいた。働いていた。"},
+      {"n":"こわいので、道をゆずった。"},
+      {"n":"むこうは、こっちに興味がなかった。"}
+    ]
+  },
+  {
+    "id": "amb_himawari_sekurabe",
+    "kind": "ambient",
+    "place": "himawari",
+    "tags": ["place:himawari"],
+    "script": [
+      {"bg":"himawari"},
+      {"n":"いちばん高いひまわりを探した。"},
+      {"n":"どれも、おれより高かった。"},
+      {"n":"ぜんぶに負けた。"},
+      {"diary":{"fact":"ひまわりぜんぶに背で負けた。","blackout":"ひまわり","tags":["fun:sekurabe"]}}
     ]
   },
   {

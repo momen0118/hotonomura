@@ -30,6 +30,7 @@
     "script": [
       {"bg":"house","here":"じいちゃんの家"},
       {"c":"フミ","t":"{{name}}、悪いんだけど、お醤油買ってきて。ミッちゃんとこで通じるから。"},
+      {"if":"met_mitsuko","c":"{{name}}","t":"(……さっき言ってよ。)","thought":true},
       {"if":"met_mitsuko","bg":"shop","here":"商店"},
       {"if":"met_mitsuko","c":"ミツ子","t":"あら、もう常連だ。"},
       {"if":"!met_mitsuko","include":"shop_intro"},

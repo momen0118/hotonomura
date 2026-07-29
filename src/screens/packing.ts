@@ -53,6 +53,7 @@ export function packingScreen(): Promise<string[]> {
       <div class="screen pad" style="min-height:0">
         <p class="head">なにを持っていく？</p>
         <p class="lead">リュックはひとつ。スマホのほかに、四つまで。</p>
+        <div class="mom-line" hidden></div>
         <div class="pack-list"></div>
         <div class="counter"></div>
         <button class="btn btn-primary" data-act="go" disabled>これで出発する</button>
@@ -62,6 +63,16 @@ export function packingScreen(): Promise<string[]> {
     const list = node.querySelector('.pack-list') as HTMLElement
     const counter = node.querySelector('.counter') as HTMLElement
     const go = node.querySelector('[data-act="go"]') as HTMLButtonElement
+    const momLine = node.querySelector('.mom-line') as HTMLElement
+
+    // アクスタかゲーム機を入れた瞬間、母の一言を一度だけ(FABLE_ANSWERS_5 §2)
+    let momSaid = false
+    const maybeMom = (id: string) => {
+      if (momSaid || (id !== 'acryl' && id !== 'game')) return
+      momSaid = true
+      momLine.innerHTML = '<span class="mom-name">母</span>そんなんあっちでいらないでしょ。'
+      momLine.hidden = false
+    }
 
     // 村で手に入る品(ぽやぽや等)はここには並ばない
     for (const item of ITEMS.filter((i) => !i.acquirable)) {
@@ -77,7 +88,10 @@ export function packingScreen(): Promise<string[]> {
       if (!item.fixed) {
         row.addEventListener('click', () => {
           if (chosen.has(item.id)) chosen.delete(item.id)
-          else if (chosen.size < SLOTS) chosen.add(item.id)
+          else if (chosen.size < SLOTS) {
+            chosen.add(item.id)
+            maybeMom(item.id)
+          }
           row.classList.toggle('on', chosen.has(item.id))
           update()
         })

@@ -212,6 +212,14 @@ body {
   gap: 10px;
 }
 
+/* 中身が多いとき縦スクロールさせる(祭りの屋台など) */
+.stack.scrolls {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
 .spacer {
   flex: 1;
 }
@@ -646,6 +654,25 @@ body {
   line-height: 1.65;
   margin-top: 4px;
 }
+/* 持ち物選択中の母の一言 */
+.mom-line {
+  background: rgba(20, 24, 30, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  animation: fadein 400ms ease;
+}
+.mom-name {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 3px;
+}
+
 .counter {
   font-size: 0.82rem;
   letter-spacing: 0.1em;
@@ -761,6 +788,12 @@ body {
   margin-bottom: 8px;
 }
 
+/* 祠の最上段「ささげない」 */
+.offer-none {
+  text-align: center;
+  margin-bottom: 6px;
+}
+
 /* 長押しで確定する。押している時間が、そのまま逡巡になる。 */
 .offer-item {
   position: relative;
@@ -783,11 +816,13 @@ body {
   transition: width 900ms linear;
 }
 
-/* 破られたページ。綴じに紙の縁だけが残る。 */
+/* 破られたページ。綴じに紙の縁だけが残り、破り口は焦げる(祠で焼いた印)。 */
 .page.torn {
   min-height: 0;
   padding: 14px 20px;
-  background: linear-gradient(90deg, var(--paper) 0 10%, rgba(245, 239, 226, 0.35) 34%, transparent 46%);
+  background:
+    linear-gradient(90deg, transparent 30%, rgba(70, 44, 20, 0.5) 40%, transparent 47%),
+    linear-gradient(90deg, var(--paper) 0 8%, rgba(214, 190, 150, 0.4) 30%, transparent 44%);
   box-shadow: none;
   clip-path: polygon(
     0 0, 40% 0, 42% 6%, 38% 14%, 43% 22%, 39% 33%, 44% 44%, 38% 56%,
@@ -797,7 +832,7 @@ body {
 .page.torn .page-date {
   border-bottom: none;
   margin-bottom: 0;
-  opacity: 0.5;
+  opacity: 0.45;
 }
 
 /* 撮らなかった日。糊の跡は出さない(捧げて消えた欠損と見分けがつくこと)。 */

@@ -206,6 +206,12 @@ export interface GameState {
   money: number
   /** 祭りで回った屋台 */
   stallsVisited: string[]
+  /** 神に収穫された思い出タグ(帰りのバスで自動・無音)。日記では黒塗り */
+  harvested: string[]
+  /** 祠で焼いた思い出タグ。日記では焦げ縁。収穫対象から外れる */
+  burned: string[]
+  /** 実物を祠に差し出して出口が開いたか(捧げて帰るEDへの唯一の鍵) */
+  exitOpen: boolean
   /** その日ぶんの日記の下書き。夜に1ページへまとめる */
   todayEntries: DiaryEntryDef[]
   todayPhoto: PhotoDef | null

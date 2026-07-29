@@ -17,14 +17,18 @@ interface Frame {
 const backlog: { speaker: string | null; text: string }[] = []
 const BACKLOG_MAX = 200
 
-function slotBar(state: GameState, here: string): string {
-  const dots = SLOT_ORDER.map(
-    (s) =>
-      `<span class="dot ${SLOT_ORDER.indexOf(s) <= SLOT_ORDER.indexOf(state.slot) ? 'on' : ''}"></span>`,
-  ).join('')
+function slotBar(state: GameState, here: string, time?: string): string {
+  // 時刻の上書きがあるとき(祭りなど)はコマのドットを出さない
+  const dots = time
+    ? ''
+    : SLOT_ORDER.map(
+        (s) =>
+          `<span class="dot ${SLOT_ORDER.indexOf(s) <= SLOT_ORDER.indexOf(state.slot) ? 'on' : ''}"></span>`,
+      ).join('')
+  const label = time ?? SLOT_LABEL[state.slot]
   return `
     <div class="hud">
-      <div class="slotbar"><span>${state.day}日目 ${SLOT_LABEL[state.slot]}</span>${dots}</div>
+      <div class="slotbar"><span>${state.day}日目 ${label}</span>${dots}</div>
       <div class="here" ${here ? '' : 'hidden'}>${esc(here)}</div>
       <button class="dev-btn" data-act="log">履歴</button>
     </div>
@@ -34,12 +38,12 @@ function slotBar(state: GameState, here: string): string {
 export async function playScene(
   state: GameState,
   ev: GameEvent,
-  opts: { hud?: boolean; here?: string } = {},
+  opts: { hud?: boolean; here?: string; time?: string } = {},
 ): Promise<void> {
   const hud = opts.hud !== false
   const scene = el(`
     <div class="scene">
-      ${hud ? slotBar(state, opts.here ?? '') : ''}
+      ${hud ? slotBar(state, opts.here ?? '', opts.time) : ''}
       <div class="textbox">
         <div class="speaker" hidden></div>
         <div class="body"></div>

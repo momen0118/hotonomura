@@ -81,18 +81,17 @@ export function resolveEvent(state: GameState, day: number, slot: Slot, place: s
   ).filter(usable)
   if (trigger.length > 0) return trigger[0]
 
-  // 日常イベントは同じ弾を続けて出さない(同日重複禁止・2日クールダウン)
-  const fresh = EVENTS.filter((e) => e.kind === 'ambient' && e.place === place)
-    .filter(usable)
-    .filter((e) => {
-      const last = state.ambientLog[e.id]
-      return last === undefined || day - last >= 2
-    })
+  // 日常イベント。場所と、コマ指定(朝/夕限定の弾)で絞る
+  const pool = EVENTS.filter(
+    (e) => e.kind === 'ambient' && e.place === place && (!e.slot || e.slot === slot),
+  ).filter(usable)
+  // 同じ弾を続けて出さない(同日重複禁止・2日クールダウン)
+  const fresh = pool.filter((e) => {
+    const last = state.ambientLog[e.id]
+    return last === undefined || day - last >= 2
+  })
   // 弾切れのときはクールダウンを無視する(何も起きないよりまし)
-  const ambient =
-    fresh.length > 0
-      ? fresh
-      : EVENTS.filter((e) => e.kind === 'ambient' && e.place === place).filter(usable)
+  const ambient = fresh.length > 0 ? fresh : pool
   if (ambient.length === 0) return null
 
   const rnd = mulberry32(hashString(`${state.seed}:${state.loop}:${day}:${slot}:${place}`))

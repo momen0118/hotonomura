@@ -1,128 +1,154 @@
 import { app, clearScreens, el, esc } from '../ui/dom'
-import { fill } from '../core/content'
+import { getItem } from '../core/content'
 import { sacrifice } from '../core/tags'
-import type { DiaryEntryDef, GameState } from '../core/types'
+import type { GameState } from '../core/types'
 import { renderPage } from './diary'
 
 /**
- * 供物を選ぶ画面。日記帳がそのまま開く(台帳=メニュー表)。
- * 確定は長押し。処刑宣告系の演出で、システム操作を感情の共犯にする(SPEC §3)。
+ * 祠(FABLE_ANSWERS_6 §4)。日記帳がそのまま開く。見出しは「なにを、おいていきますか」。
  *
- * depart = 帰りのバスの前。「なにを、おいていきますか」。最低一つ置かないと巻き戻れない(席料)
- * shrine = 祠。ページを破る。綴じの反対側のページも物理的に抜ける
+ * ・村の思い出のページを破る(長押し)= 焼く。綴じの反対側も抜け、破り縁は焦げる。
+ *   これは村への好き総量を減らすが、出口は開かない(自分の畑の作物で家賃は払えない)。
+ * ・「ささげない」→ 帰る / リュックをあける。持ち込んだ実物を差し出すと出口が開く。
+ *   「リュックをあける」は商店の奥の棚を見たあと(3周目〜)だけ出る。
+ *
+ * 演出テキストは未納品なので、システムメッセージ程度の仮文言で骨組みだけ通す。
  */
-export type OfferMode = 'depart' | 'shrine'
-
 const PRESS_MS = 900
 
-interface Candidate {
-  key: string
-  label: string
-  tags: string[]
-  pageIndex: number
-}
-
-function candidates(state: GameState): Candidate[] {
-  const out: Candidate[] = []
-  state.diary.forEach((page, pageIndex) => {
-    if (page.torn) return
-    page.entries.forEach((e: DiaryEntryDef, i) => {
-      if (!e.tags || e.tags.length === 0) return
-      if (e.tags.some((t) => state.sacrificed.includes(t))) return
-      out.push({
-        key: `${pageIndex}:${i}`,
-        label: fill(state, e.fact ?? ''),
-        tags: e.tags,
-        pageIndex,
-      })
-    })
-  })
-  return out
-}
-
-export function offerScreen(state: GameState, mode: OfferMode): Promise<boolean> {
+export function shrineScreen(state: GameState): Promise<void> {
   clearScreens()
   return new Promise((resolve) => {
-    const rows = candidates(state)
+    const root = el('<div class="diary-screen shrine"></div>')
+    app.appendChild(root)
 
-    const heading = mode === 'depart' ? 'なにを、おいていきますか' : 'どのページを破りますか'
-    const lead =
-      mode === 'depart'
-        ? '長押しで決まります。'
-        : '破いたページの、綴じの反対側も抜けます。長押しで決まります。'
-
-    const node = el(`
-      <div class="diary-screen">
-        <div class="offer-head">
-          <p class="offer-title">${esc(heading)}</p>
-          <p class="hint">${esc(lead)}</p>
-        </div>
-        <div class="offer-body"></div>
-      </div>
-    `)
-    const body = node.querySelector('.offer-body') as HTMLElement
-
-    if (mode === 'depart') {
-      if (rows.length === 0) {
-        body.appendChild(el('<p class="hint">置いていけるものが、もうない。</p>'))
-        const b = el('<button class="btn btn-primary">とじる</button>')
-        b.addEventListener('click', () => {
-          node.remove()
-          resolve(false)
-        })
-        body.appendChild(b)
-      }
-      for (const row of rows) {
-        const btn = el(`
-          <button class="btn offer-item">
-            <span class="fill"></span>
-            <span class="txt">${esc(row.label)}</span>
-          </button>
-        `)
-        longPress(btn, () => {
-          sacrifice(state, row.tags)
-          node.remove()
-          resolve(true)
-        })
-        body.appendChild(btn)
-      }
-    } else {
-      state.diary.forEach((page, i) => {
-        if (page.torn) return
-        const wrap = el('<div class="offer-page"></div>')
-        wrap.appendChild(renderPage(state, page))
-        const btn = el(`
-          <button class="btn offer-item">
-            <span class="fill"></span>
-            <span class="txt">このページを破る</span>
-          </button>
-        `)
-        longPress(btn, () => {
-          tearPage(state, i)
-          node.remove()
-          resolve(true)
-        })
-        wrap.appendChild(btn)
-        body.appendChild(wrap)
-      })
-      const cancel = el('<button class="btn">やめる</button>')
-      cancel.addEventListener('click', () => {
-        node.remove()
-        resolve(false)
-      })
-      body.appendChild(cancel)
+    const done = () => {
+      root.remove()
+      resolve()
     }
 
-    app.appendChild(node)
+    showBurnList(state, root, done)
   })
+}
+
+/** 村の思い出のページ一覧。焼くと綴じの反対側も抜ける。 */
+function showBurnList(state: GameState, root: HTMLElement, done: () => void): void {
+  root.innerHTML = ''
+  const head = el(`
+    <div class="offer-head">
+      <p class="offer-title">なにを、おいていきますか</p>
+      <p class="hint">ページを長押しで破ります。破いたページの、綴じの反対側も抜けます。</p>
+    </div>
+  `)
+  root.appendChild(head)
+
+  const body = el('<div class="offer-body"></div>')
+  root.appendChild(body)
+
+  // 最上段は必ず「ささげない」
+  const none = el('<button class="btn btn-primary offer-none">ささげない</button>')
+  none.addEventListener('click', () => showExit(state, root, done))
+  body.appendChild(none)
+
+  const pages = state.diary.filter((p) => !p.torn)
+  if (pages.length === 0) {
+    body.appendChild(el('<p class="hint" style="text-align:center">焼けるページが、もうない。</p>'))
+  }
+
+  state.diary.forEach((page, i) => {
+    if (page.torn) return
+    const wrap = el('<div class="offer-page"></div>')
+    wrap.appendChild(renderPage(state, page))
+    const btn = el(`
+      <button class="btn offer-item">
+        <span class="fill"></span>
+        <span class="txt">このページを破る</span>
+      </button>
+    `)
+    longPress(btn, () => {
+      burnPage(state, i)
+      showBurnList(state, root, done)
+    })
+    wrap.appendChild(btn)
+    body.appendChild(wrap)
+  })
+}
+
+/** 「ささげない」のあと。帰る、または(棚を見ていれば)リュックをあける。 */
+function showExit(state: GameState, root: HTMLElement, done: () => void): void {
+  root.innerHTML = ''
+  root.appendChild(el('<div class="offer-head"><p class="offer-title">祠のまえ</p></div>'))
+
+  const body = el('<div class="offer-body"></div>')
+  root.appendChild(body)
+
+  const leave = el('<button class="btn" data-act="leave">帰る</button>')
+  leave.addEventListener('click', done)
+  body.appendChild(leave)
+
+  // 「リュックをあける」は商店の奥の棚を見たあと(3周目〜)だけ出る
+  if (state.flags.shelf_seen === true) {
+    const open = el('<button class="btn" data-act="bag">リュックをあける</button>')
+    open.addEventListener('click', () => showBag(state, root, done))
+    body.appendChild(open)
+  }
+}
+
+/** リュックの実物一覧。差し出すと出口が開く(捧げて帰るEDへ)。 */
+function showBag(state: GameState, root: HTMLElement, done: () => void): void {
+  root.innerHTML = ''
+  root.appendChild(
+    el(`
+    <div class="offer-head">
+      <p class="offer-title">リュックのなか</p>
+      <p class="hint">差し出したものは、次のバスで帰り道をひらきます。長押しで決まります。</p>
+    </div>
+  `),
+  )
+  const body = el('<div class="offer-body"></div>')
+  root.appendChild(body)
+
+  const items = state.inventory.filter((id) => !state.sacrificed.includes(`item:${id}`))
+  if (items.length === 0) {
+    body.appendChild(el('<p class="hint" style="text-align:center">差し出せる実物がない。</p>'))
+  }
+  for (const id of items) {
+    const item = getItem(id)
+    if (!item) continue
+    const btn = el(`
+      <button class="btn offer-item">
+        <span class="fill"></span>
+        <span class="txt">${esc(item.name)}</span>
+      </button>
+    `)
+    longPress(btn, () => {
+      sacrifice(state, [`item:${id}`])
+      state.exitOpen = true
+      done()
+    })
+    body.appendChild(btn)
+  }
+
+  const back = el('<button class="btn" data-act="back">やめる</button>')
+  back.addEventListener('click', () => showExit(state, root, done))
+  body.appendChild(back)
 }
 
 /** 一枚破ると、綴じの反対側も抜ける。紙は一枚で二ページぶんだから。 */
-function tearPage(state: GameState, index: number): void {
+function burnPage(state: GameState, index: number): void {
   const n = state.diary.length
-  const opposite = n - 1 - index
-  state.diary[index].torn = true
-  if (opposite >= 0 && opposite < n) state.diary[opposite].torn = true
+  for (const i of [index, n - 1 - index]) {
+    if (i < 0 || i >= n) continue
+    const page = state.diary[i]
+    if (page.torn) continue
+    page.torn = true
+    // 焼いたページの思い出タグは、以後の収穫対象から外れる
+    for (const e of page.entries) {
+      for (const tag of e.tags ?? []) {
+        if (!state.burned.includes(tag)) state.burned.push(tag)
+      }
+    }
+  }
 }
 
 function longPress(btn: HTMLElement, onDone: () => void): void {

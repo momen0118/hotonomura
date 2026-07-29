@@ -207,11 +207,51 @@ console.log('「距離が近い。」の残存数:', (after.text.match(/距離�
 for (const line of after.text.split('\n')) {
   if (/コーラ|タロ/.test(line)) console.log('  残っている行:', JSON.stringify(line))
 }
+// 直前の黒塗り確認で開いた日記を閉じてから祠へ
+if (await page.$('.diary-screen [data-act="close"]')) {
+  await page.click('.diary-screen [data-act="close"]')
+  await page.waitForTimeout(300)
+}
+
+// 祠をひらいてページを1枚焼けるか(綴じの反対側も抜けるか)を確認する
+await page.click('.dev button')
+await page.waitForTimeout(300)
+await page.click('.dev-panel .btn:has-text("祠をひらく")')
+await page.waitForTimeout(400)
+const shrineOpened = !!(await page.$('.shrine'))
+await shot('70-shrine')
+const burn = await page.$('.offer-item')
+let tornCount = 0
+if (burn) {
+  const box = await burn.boundingBox()
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.waitForTimeout(1050)
+  await page.mouse.up()
+  await page.waitForTimeout(400)
+  await shot('71-shrine-burned')
+  // 祠を出て(ささげない→帰る)、日記側で焦げ縁ページを数える
+  await page.click('.shrine .offer-none')
+  await page.waitForTimeout(200)
+  await page.click('.shrine [data-act="leave"]')
+  await page.waitForTimeout(300)
+  if (await page.$('.dev-panel')) {
+    await page.click('.dev-panel .btn:has-text("日記を読む")')
+    await page.waitForTimeout(400)
+    tornCount = await page.$$eval('.page.torn', (n) => n.length)
+    await shot('72-diary-torn')
+  }
+}
+
+console.log('祠が開いたか:', shrineOpened)
+console.log('焼いたあとの torn ページ数(綴じの反対側込みで2以上を期待):', tornCount)
 console.log('steps:', steps)
 console.log('errors:', errors.length ? errors : 'none')
 await browser.close()
 
 const fail = []
+if (!shrineOpened) fail.push('祠が開かない')
+if (tornCount < 2) fail.push('祠でページを焼いても綴じの反対側が抜けていない')
 if (steps >= MAX_STEPS) fail.push('通しで終端に到達しませんでした')
 if (errors.length) fail.push('JSエラーあり')
 if (before.lines !== after.lines) fail.push('行が消えている(v2では行は消さない)')
