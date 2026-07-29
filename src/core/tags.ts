@@ -1,4 +1,12 @@
 import type { GameState } from './types'
+import itemsJson from '../data/items.json'
+
+// 持ち物 id → その持ち物が背負っているタグ。
+// ぽやぽやは item:poyapoya と poyapoya の二重籍(FABLE_ANSWERS_9 §1)。
+// 「射的の記憶(poyapoya)」が収穫されると、実物のぬいぐるみも世界から消える。
+const ITEM_TAGS: Record<string, string[]> = Object.fromEntries(
+  (itemsJson as { id: string; tags: string[] }[]).map((i) => [i.id, i.tags]),
+)
 
 // 捧げられたものの扱い(SPEC.md §3)。
 //  - 世界: そのタグを持つ行・イベント・場所・持ち物は「最初から無かった」ように消える。
@@ -20,8 +28,12 @@ export function sacrifice(state: GameState, tags: string[]): void {
   for (const t of tags) {
     if (!state.sacrificed.includes(t)) state.sacrificed.push(t)
   }
-  // 持ち物そのものが捧げられた場合、リュックからも消える
-  state.inventory = state.inventory.filter((id) => !state.sacrificed.includes(`item:${id}`))
+  // 持ち物が背負うタグのどれか一つでも捧げられたら、リュックからも消える。
+  // これで poyapoya(記憶タグ)の収穫が、ぽやぽや(実物)の消失に波及する。
+  state.inventory = state.inventory.filter((id) => {
+    const tags = ITEM_TAGS[id] ?? [`item:${id}`]
+    return !tags.some((t) => state.sacrificed.includes(t))
+  })
 }
 
 /**

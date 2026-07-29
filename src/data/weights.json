@@ -3,6 +3,7 @@
   "fun:matsuri": 5,
   "taro": 5,
   "fun:himawari": 4,
+  "poyapoya": 4,
   "fun:mizukiri": 3,
   "fun:guide": 3,
   "fun:mukaebi": 2,
@@ -19,6 +20,7 @@
   "fun:tomato": 2,
   "fun:watch": 2,
   "fun:bike": 2,
+  "fun:album": 2,
   "fun:cola": 1,
   "fun:ramune": 1,
   "fun:ice": 1,
@@ -32,5 +34,7 @@
   "fun:nukegara": 1,
   "fun:ishizumi": 1,
   "fun:atari": 1,
-  "fun:sekurabe": 1
+  "fun:sekurabe": 1,
+  "fun:amado": 1,
+  "fun:kasa": 1
 }

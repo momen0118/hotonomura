@@ -1,6 +1,7 @@
 import { app, clearScreens, el, esc } from '../ui/dom'
 import { getItem } from '../core/content'
 import { sacrifice } from '../core/tags'
+import { save } from '../core/state'
 import type { GameState } from '../core/types'
 import { renderPage } from './diary'
 
@@ -86,8 +87,11 @@ function showExit(state: GameState, root: HTMLElement, done: () => void): void {
   leave.addEventListener('click', done)
   body.appendChild(leave)
 
-  // 「リュックをあける」は商店の奥の棚を見たあと(3周目〜)だけ出る
-  if (state.flags.shelf_seen === true) {
+  // 「リュックをあける」は二重フラグで解禁される(FABLE_ANSWERS_8 §1)。
+  //   ① 商店の奥の棚(預かりもの)を見た   shelf_seen
+  //   ② ツリさんの餌の台詞を聞いた         bait_heard(3周目・堤防で確定)
+  // 実物を差し出せる状態になった時点で、プレイヤーは必ず餌の理屈を聞いている。
+  if (state.flags.shelf_seen === true && state.flags.bait_heard === true) {
     const open = el('<button class="btn" data-act="bag">リュックをあける</button>')
     open.addEventListener('click', () => showBag(state, root, done))
     body.appendChild(open)
@@ -122,8 +126,12 @@ function showBag(state: GameState, root: HTMLElement, done: () => void): void {
       </button>
     `)
     longPress(btn, () => {
-      sacrifice(state, [`item:${id}`])
-      state.exitOpen = true
+      // 実物が背負う全タグを捧げる(ぽやぽやは item:poyapoya と poyapoya の両方=記憶ごと灰になる)。
+      sacrifice(state, item.tags ?? [`item:${id}`])
+      // 出口が開くのは、外から持ち込んだ熟成品(村産でない実物)を差し出したときだけ。
+      // 村で手に入った実物(ぽやぽや)は受理され灰になるが、出口は開かず石の焦げも変わらない。
+      if (!item.acquirable) state.exitOpen = true
+      save(state)
       done()
     })
     body.appendChild(btn)

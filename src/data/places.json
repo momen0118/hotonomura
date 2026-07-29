@@ -48,5 +48,6 @@
     "initial": false,
     "tags": ["place:himawari"]
   },
-  {"id":"matsuri","name":"広場","label":"広場に行く","bg":"matsuri","initial":false}
+  {"id":"matsuri","name":"広場","label":"広場に行く","bg":"matsuri","initial":false},
+  {"id":"shrine","name":"祠","label":"祠に行く","hint":"ひまわり畑の奥。","bg":"shrine","initial":false}
 ]

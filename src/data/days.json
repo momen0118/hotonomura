@@ -25,5 +25,10 @@
   },
   {"day":5,"date":"8月14日","slots":{"morning":{},"noon":{"locked":"himawari"},"evening":{}}},
   {"day":6,"date":"8月15日","festival":true},
-  {"day":7,"date":"8月16日","slots":{"morning":{},"noon":{},"evening":{"locked":"house"}}}
+  {"day":7,"date":"8月16日","slots":{"morning":{},"noon":{},"evening":{"locked":"house"}}},
+  {
+    "day": 8,
+    "date": "8月17日",
+    "slots": {"morning":{"locked":"house"},"noon":{"locked":"house"},"evening":{"locked":"house"}}
+  }
 ]

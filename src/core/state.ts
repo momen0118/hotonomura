@@ -94,10 +94,14 @@ export function clearSave(): void {
   localStorage.removeItem(SAVE_KEY)
 }
 
-/** フラグ条件の判定。"flag" / "!flag" / "day>=3" 程度だけ見る。 */
+/** フラグ条件の判定。"flag" / "!flag" / "day>=3" / "loop>=2" / "a && b" 程度だけ見る。 */
 export function testCondition(state: GameState, cond: string | undefined): boolean {
   if (!cond) return true
   const expr = cond.trim()
+  // 「a && b」= 全部満たすとき true。調査導線の「2周目 かつ まだ見つけていない」等で使う。
+  if (expr.includes('&&')) {
+    return expr.split('&&').every((part) => testCondition(state, part.trim()))
+  }
   if (expr.startsWith('!')) return !truthy(state, expr.slice(1))
   return truthy(state, expr)
 }
@@ -110,6 +114,9 @@ function truthy(state: GameState, key: string): boolean {
   // "day>=8" = 8日目以降
   const dayCmp = key.match(/^day>=(\d+)$/)
   if (dayCmp) return state.day >= Number(dayCmp[1])
+  // "loop>=2" = 二周目以降(調査コマ・二周目開幕の解禁に使う)
+  const loopCmp = key.match(/^loop>=(\d+)$/)
+  if (loopCmp) return state.loop >= Number(loopCmp[1])
   const v = state.flags[key]
   return v !== undefined && v !== false && v !== 0 && v !== ''
 }

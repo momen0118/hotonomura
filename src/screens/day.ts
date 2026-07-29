@@ -59,6 +59,22 @@ export function placeSelect(state: GameState, slot: Slot): Promise<string> {
       stack.appendChild(b)
     }
 
+    // 増水などで一時的に選べない場所を、理由つきで灰色表示する(FABLE_ANSWERS_8 §2)。
+    const grayed = getDay(state.day)?.slots?.[slot]?.grayed
+    if (grayed) {
+      for (const [id, reason] of Object.entries(grayed)) {
+        const p = getPlace(id)
+        if (!p) continue
+        const b = el(`
+          <button class="btn" disabled>
+            ${esc(p.label)}
+            <span class="sub">${esc(reason)}</span>
+          </button>
+        `)
+        stack.appendChild(b)
+      }
+    }
+
     node.querySelector('[data-act="diary"]')!.addEventListener('click', async () => {
       await openDiary(state)
     })

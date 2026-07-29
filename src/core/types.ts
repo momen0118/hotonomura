@@ -147,6 +147,12 @@ export interface DaySlotDef {
   locked?: string
   /** 選べる場所。省略時は解放済みの全場所 */
   places?: string[]
+  /**
+   * 選べない場所と、その理由文(FABLE_ANSWERS_8 §2)。
+   * 台風の増水で Day 9〜10 の川原を「川はまだ水が出ている」で灰色表示する等。
+   * ここに載せる場所は places からは外すこと(二重表示を避ける)。
+   */
+  grayed?: Record<string, string>
 }
 
 export interface DayDef {

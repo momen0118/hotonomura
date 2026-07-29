@@ -63,6 +63,6 @@
     "desc": "射的で取った。ナツとおそろい。なんの生き物かは、わからない。",
     "draft": true,
     "acquirable": true,
-    "tags": ["item:poyapoya"]
+    "tags": ["item:poyapoya","poyapoya"]
   }
 ]

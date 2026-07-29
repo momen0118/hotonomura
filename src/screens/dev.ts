@@ -155,10 +155,10 @@ function openDevPanel(state: GameState, onChange: () => void): void {
   })
   misc.appendChild(shrineBtn)
 
-  // 「リュックをあける」は本来3周目に商店の奥の棚を見てから解禁される。確認用に手で立てる。
+  // 「リュックをあける」は二重フラグで解禁される(棚を見た AND 餌の台詞を聞いた)。確認用に手で立てる。
   const shelfBtn = el(
     `<button class="btn">商店の奥の棚フラグ: ${state.flags.shelf_seen ? 'ON' : 'OFF'}
-      <span class="sub">ONで祠に「リュックをあける」が出ます(実物を差し出せる)。</span>
+      <span class="sub">預かりものの棚(3周目)を見た。「リュックをあける」に必要な二つのうち片方。</span>
     </button>`,
   )
   shelfBtn.addEventListener('click', () => {
@@ -168,6 +168,19 @@ function openDevPanel(state: GameState, onChange: () => void): void {
     openDevPanel(state, onChange)
   })
   misc.appendChild(shelfBtn)
+
+  const baitBtn = el(
+    `<button class="btn">ツリさんの餌の台詞フラグ: ${state.flags.bait_heard ? 'ON' : 'OFF'}
+      <span class="sub">「餌はこっちの水で育ったもんじゃ食いつかん」を聞いた(3周目・堤防)。もう片方。両方ONで祠に「リュックをあける」が出ます。</span>
+    </button>`,
+  )
+  baitBtn.addEventListener('click', () => {
+    state.flags.bait_heard = !state.flags.bait_heard
+    onChange()
+    panel.remove()
+    openDevPanel(state, onChange)
+  })
+  misc.appendChild(baitBtn)
 
   const resetBtn = el('<button class="btn">セーブを消して最初から</button>')
   resetBtn.addEventListener('click', async () => {

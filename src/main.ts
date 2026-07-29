@@ -14,6 +14,7 @@ import {
   resolvePrelude,
 } from './core/content'
 import { SLOT_ORDER, clearSave, load, newGame, save, setLoadout } from './core/state'
+import { hashString, mulberry32 } from './core/rng'
 import type { GameState } from './core/types'
 import { titleScreen } from './screens/title'
 import { nameScreen, packingScreen } from './screens/packing'
@@ -22,7 +23,18 @@ import { playScene } from './screens/scene'
 import { openDiary, writeNightPage } from './screens/diary'
 import { festivalDay } from './screens/festival'
 import { homecoming } from './screens/homecoming'
+import { shrineScreen } from './screens/offer'
 import { devButton } from './screens/dev'
+
+// ナツが「今日いるか」を毎日抽選する(FABLE_ANSWERS_9 Q5)。
+// 基礎確率70%。ただしナツ必須の固定イベント日は強制で在。
+// 種は seed+loop+day から作るので、セーブ・再読み込みしても同じ日は同じ結果になる。
+const FORCED_NATSU_DAYS = new Set([2, 3, 4, 5, 6, 7, 11, 13])
+function decideNatsuToday(state: GameState): boolean {
+  if (FORCED_NATSU_DAYS.has(state.day)) return true
+  const rnd = mulberry32(hashString(`${state.seed}:${state.loop}:${state.day}:natsu`))
+  return rnd() < 0.7
+}
 
 async function main(): Promise<void> {
   const choice = await titleScreen()
@@ -78,6 +90,8 @@ async function gameLoop(state: GameState): Promise<'rewind' | 'end'> {
       void setBg(first ? (getPlace(first)?.bg ?? 'house') : 'house')
       await dayInterstitial(state)
       state.flags[introKey] = true
+      // その日ナツがいるか。日記・イベントから `natsu_today` / `!natsu_today` で参照できる。
+      state.flags.natsu_today = decideNatsuToday(state)
       save(state)
     }
 
@@ -95,6 +109,16 @@ async function gameLoop(state: GameState): Promise<'rewind' | 'end'> {
     const locked = lockedPlace(state.day, state.slot)
     const place = locked ?? (await placeSelect(state, state.slot))
     clearScreens()
+
+    // 祠は場所として選べる(2周目で発見後)。ここへ行くと「なにを、おいていきますか」が開く。
+    // 確認用パネルの「祠をひらく」を正規の導線に置き換えたもの(FABLE_ANSWERS_9 §4)。
+    if (place === 'shrine') {
+      await setBg(getPlace('shrine')?.bg ?? 'himawari')
+      await shrineScreen(state)
+      await finishSlot(state)
+      continue
+    }
+
     const placeName = getPlace(place)?.name ?? ''
     // イベント自身が here を切り替えるなら、初期表示は空にする(移動中に行き先がバレないように)
     const initialHere = (ev: { script: { here?: string }[] } | null) =>
@@ -117,20 +141,25 @@ async function gameLoop(state: GameState): Promise<'rewind' | 'end'> {
       await emptySlot()
     }
 
-    const i = SLOT_ORDER.indexOf(state.slot)
-    if (i < SLOT_ORDER.length - 1) {
-      state.slot = SLOT_ORDER[i + 1]
-      save(state)
-    } else {
-      await writeNightPage(state)
-      state.day += 1
-      state.slot = 'morning'
-      save(state)
-      if (getDay(state.day)) await fadeThrough(() => clearScreens())
-    }
+    await finishSlot(state)
   }
 
   return await sliceEnd(state)
+}
+
+/** そのコマを終える。夕方なら夜の日記を書いて翌日へ。祠と通常コマで共用する。 */
+async function finishSlot(state: GameState): Promise<void> {
+  const i = SLOT_ORDER.indexOf(state.slot)
+  if (i < SLOT_ORDER.length - 1) {
+    state.slot = SLOT_ORDER[i + 1]
+    save(state)
+  } else {
+    await writeNightPage(state)
+    state.day += 1
+    state.slot = 'morning'
+    save(state)
+    if (getDay(state.day)) await fadeThrough(() => clearScreens())
+  }
 }
 
 function emptySlot(): Promise<void> {
@@ -165,7 +194,7 @@ function sliceEnd(state: GameState): Promise<'rewind' | 'end'> {
       <div class="panel">
         <p class="head">ここまでが遊べるぶんです</p>
         <p class="hint">
-          七日目まで。八日目〜十三日目はこれから作ります。<br><br>
+          八日目まで。九日目〜十三日目はこれから作ります。<br><br>
           台詞に「仮」の印が付いているところは、Fable の確定稿待ちです。
         </p>
       </div>

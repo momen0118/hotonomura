@@ -1,6 +1,7 @@
 {
   "_comment": "捧げられる対象。人は供物にできない(ナツは並ばない)。ナツへの好きは個別体験に分散して載る。",
   "taro": "タロ",
+  "poyapoya": "ぽやぽや(射的の記憶)",
   "place:river": "川原",
   "place:himawari": "ひまわり畑",
   "fun:cola": "おまけのコーラ",
@@ -15,6 +16,9 @@
   "fun:tomato": "じいちゃんのトマト",
   "fun:nukegara": "蝉のぬけがら",
   "fun:atari": "当たったアイス",
+  "fun:amado": "雨戸",
+  "fun:kasa": "傘",
+  "fun:album": "アルバム",
   "fun:mizukiri": "水切り",
   "fun:chochin": "仏間の回る提灯",
   "fun:suika": "スイカの種飛ばし",
