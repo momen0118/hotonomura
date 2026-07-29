@@ -43,7 +43,7 @@ export function nameScreen(): Promise<string> {
  * スマホは並ぶが外せない——選べないのに一行説明があるのは、そのための表示。
  * 将来この画面は「机にばらっと並んだ一枚絵」になる(items.json の spot が配置用)。
  */
-export function packingScreen(): Promise<string[]> {
+export function packingScreen(loop = 1): Promise<string[]> {
   clearScreens()
   void setBg('room')
   return new Promise((resolve) => {
@@ -65,13 +65,23 @@ export function packingScreen(): Promise<string[]> {
     const go = node.querySelector('[data-act="go"]') as HTMLButtonElement
     const momLine = node.querySelector('.mom-line') as HTMLElement
 
-    // アクスタかゲーム機を入れた瞬間、母の一言を一度だけ(FABLE_ANSWERS_5 §2)
-    let momSaid = false
-    const maybeMom = (id: string) => {
-      if (momSaid || (id !== 'acryl' && id !== 'game')) return
-      momSaid = true
-      momLine.innerHTML = '<span class="mom-name">母</span>そんなんあっちでいらないでしょ。'
+    // 品を入れた瞬間の母の一言(各一度だけ)。
+    //  アクスタ/ゲーム機 → 「そんなんあっちでいらないでしょ。」(FABLE_ANSWERS_5 §2)
+    //  夏期講習テキスト   → 「あら。……えらいじゃない。」(FABLE_ANSWERS_7 §3)
+    let momItemsaid = false
+    let momTextbookSaid = false
+    const say = (text: string) => {
+      momLine.innerHTML = `<span class="mom-name">母</span>${text}`
       momLine.hidden = false
+    }
+    const maybeMom = (id: string) => {
+      if (!momItemsaid && (id === 'acryl' || id === 'game')) {
+        momItemsaid = true
+        say('そんなんあっちでいらないでしょ。')
+      } else if (!momTextbookSaid && id === 'textbook') {
+        momTextbookSaid = true
+        say('あら。……えらいじゃない。')
+      }
     }
 
     // 村で手に入る品(ぽやぽや等)はここには並ばない
@@ -105,7 +115,19 @@ export function packingScreen(): Promise<string[]> {
     }
     update()
 
-    go.addEventListener('click', () => resolve([...chosen]))
+    // 二周目以降、机の前で手が止まると、母の差分一言(FABLE_ANSWERS_7 §2)。
+    // 迷わず選んで出発する周では出ない=「手が止まる」ときだけの一言。
+    let hesitateTimer = 0
+    if (loop >= 2) {
+      hesitateTimer = window.setTimeout(() => {
+        if (momLine.hidden) say('なに？ 行きたくなくなった？')
+      }, 6000)
+    }
+
+    go.addEventListener('click', () => {
+      if (hesitateTimer) clearTimeout(hesitateTimer)
+      resolve([...chosen])
+    })
     app.appendChild(node)
   })
 }

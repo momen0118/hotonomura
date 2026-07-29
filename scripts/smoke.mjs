@@ -66,14 +66,16 @@ while (steps < MAX_STEPS) {
     break
   }
 
-  // リュック詰め: 固定枠(スマホ)以外から4つ選ぶ
+  // リュック詰め: 固定枠(スマホ)以外から4つ選ぶ。巻き戻し後のOPでも毎回やり直す。
   const packGo = await page.$('[data-act="go"]')
-  if (packGo && !packed) {
+  if (packGo) {
     const rows = await page.$$('.pack-item:not(.fixed)')
     for (const i of [0, 2, 4, 7]) await rows[i].click()
-    await shot('03-packing')
+    if (!packed) {
+      await shot('03-packing')
+      packed = true
+    }
     await packGo.click()
-    packed = true
     await page.waitForTimeout(500)
     continue
   }
@@ -123,16 +125,21 @@ while (steps < MAX_STEPS) {
     continue
   }
 
-  // 「なにを、おいていきますか」。長押しで確定する。
-  const offer = await page.$('.offer-item')
-  if (offer) {
+  // 場所として祠に入ったとき(2周目以降)は、何もせず出る。
+  // ここで捧げる/焼くと周回の日記状態が乱れるので、ささげない→帰るで抜ける。
+  // 焼き込みの確認は、通しのあと確認用パネルの「祠をひらく」で別途行う。
+  if (await page.$('.shrine')) {
     await once('offer', '60-offer')
-    const box = await offer.boundingBox()
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-    await page.mouse.down()
-    await page.waitForTimeout(1100)
-    await page.mouse.up()
-    await page.waitForTimeout(400)
+    const none = await page.$('.shrine .offer-none')
+    if (none) {
+      await none.click()
+      await page.waitForTimeout(200)
+    }
+    const leave = await page.$('.shrine [data-act="leave"]')
+    if (leave) {
+      await leave.click()
+      await page.waitForTimeout(200)
+    }
     continue
   }
 

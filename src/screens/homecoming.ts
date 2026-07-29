@@ -27,7 +27,8 @@ export async function homecoming(state: GameState): Promise<void> {
       rewind(state, initialPlaces())
       save(state)
       clearScreens()
-      await setBg('bus')
+      // 白む→出発の朝(OP)へ(FABLE_ANSWERS_7 §2)。バス車内ではない。この直後に runOP が走る。
+      await setBg('room')
     },
     { white: true, ms: 1200 },
   )

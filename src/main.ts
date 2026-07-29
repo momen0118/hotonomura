@@ -41,25 +41,10 @@ async function main(): Promise<void> {
 
   let state: GameState | null = choice === 'continue' ? load() : null
   if (!state) {
-    // OP: 出発の朝。母の声 → 机の上から選ぶ → 母が日記帳を入れる。
     const name = await nameScreen()
     state = newGame(name, fixedItems())
     state.places = initialPlaces()
-
-    clearScreens()
-    await playScene(state, getEvent('op_morning'), { hud: false })
-
-    const chosen = await packingScreen()
-    setLoadout(
-      state,
-      chosen,
-      ITEMS.filter((i) => !i.acquirable).map((i) => i.id),
-    )
-
-    clearScreens()
-    await playScene(state, getEvent('op_diary'), { hud: false })
-    save(state)
-
+    await runOP(state)
     await fadeThrough(() => clearScreens())
   }
 
@@ -67,11 +52,36 @@ async function main(): Promise<void> {
   if (!currentBg()) await setBg('house')
 
   mountDev(state)
-  // 巻き戻したら、そのまま次の周を始める
   for (;;) {
     const outcome = await gameLoop(state)
     if (outcome !== 'rewind') break
+    // 巻き戻し(お代わり)。白む→出発の朝(OP)に戻る(FABLE_ANSWERS_7 §2)。
+    // 持ち物選択を毎周やり直す=供物計画の中核。日記帳の受け渡しも毎周同一。
+    await runOP(state)
+    await fadeThrough(() => clearScreens())
   }
+}
+
+/**
+ * OP(出発の朝)。母の声 → 机の上から持ち物を選ぶ → 母が日記帳を入れる。
+ * 一周目も、巻き戻し後も同じここを通る。周回ごとに持ち物を組み替えられる。
+ */
+async function runOP(state: GameState): Promise<void> {
+  clearScreens()
+  await playScene(state, getEvent('op_morning'), { hud: false })
+
+  const chosen = await packingScreen(state.loop)
+  // 巻き戻し後は前周の持ち物が残っているので、固定品まで戻してから選び直す。
+  state.inventory = [...fixedItems()]
+  setLoadout(
+    state,
+    chosen,
+    ITEMS.filter((i) => !i.acquirable).map((i) => i.id),
+  )
+
+  clearScreens()
+  await playScene(state, getEvent('op_diary'), { hud: false })
+  save(state)
 }
 
 function mountDev(state: GameState): void {

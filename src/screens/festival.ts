@@ -35,7 +35,16 @@ export async function festivalDay(state: GameState): Promise<void> {
 
     if (affordable.length === 0) break
     const picked = await stallSelect(state, remaining)
-    if (!picked) break
+    if (!picked) {
+      // 一軒も回らずに帰ろうとすると、ナツに連れ戻される(FABLE_ANSWERS_7 §3)。
+      if (state.stallsVisited.length === 0) {
+        clearScreens()
+        await playScene(state, getEvent('d06_leave_guard'), { here: '広場', time: '夜' })
+        save(state)
+        continue
+      }
+      break
+    }
 
     state.money -= picked.price
     state.stallsVisited.push(picked.id)
