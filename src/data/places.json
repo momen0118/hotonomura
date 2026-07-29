@@ -49,5 +49,7 @@
     "tags": ["place:himawari"]
   },
   {"id":"matsuri","name":"広場","label":"広場に行く","bg":"matsuri","initial":false},
-  {"id":"shrine","name":"祠","label":"祠に行く","hint":"ひまわり畑の奥。","bg":"shrine","initial":false}
+  {"id":"shrine","name":"祠","label":"祠に行く","hint":"ひまわり畑の奥。","bg":"shrine","initial":false},
+  {"id":"road","name":"道","label":"—","bg":"road","initial":false},
+  {"id":"teibou","name":"堤防","label":"堤防に行く","hint":"川ぞいの、風の通る道。","bg":"river","initial":false}
 ]

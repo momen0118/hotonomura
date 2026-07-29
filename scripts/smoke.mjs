@@ -37,7 +37,7 @@ await page.waitForTimeout(500)
 let steps = 0
 let packed = false
 let rewound = false
-const MAX_STEPS = 3000
+const MAX_STEPS = 6000
 while (steps < MAX_STEPS) {
   steps++
 

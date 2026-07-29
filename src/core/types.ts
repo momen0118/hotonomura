@@ -46,6 +46,8 @@ export interface Line {
   unlock?: string[]
   /** 持ち物の取得 */
   gain?: string[]
+  /** 全ページの日記を開く(二周目開幕など)。プレイヤーがめくって閉じると次の行へ。 */
+  openDiary?: boolean
 }
 
 export interface ChoiceDef {

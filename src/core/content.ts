@@ -50,6 +50,8 @@ export function availablePlaces(state: GameState, day: number, slot: Slot): stri
   const ids = def?.places ?? state.places
   return ids
     .filter((id) => state.places.includes(id))
+    // グレーアウト指定の場所は選択肢に出さない(別途、理由つきの灰色ボタンで表示する)
+    .filter((id) => !def?.grayed?.[id])
     .filter((id) => {
       const p = getPlace(id)
       return p ? !isLost(state, p.tags) : false

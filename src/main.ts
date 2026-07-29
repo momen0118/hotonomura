@@ -116,7 +116,12 @@ async function gameLoop(state: GameState): Promise<'rewind' | 'end'> {
       continue
     }
 
-    const locked = lockedPlace(state.day, state.slot)
+    let locked = lockedPlace(state.day, state.slot)
+    // ロック先のイベントが世界同期で消えた周(例: タロ収穫後のDay 9〜10)は、
+    // そのコマを自由コマに開放する(FABLE_ANSWERS_10 §6)。
+    if (locked && !resolveEvent(state, state.day, state.slot, locked) && !resolvePrelude(state, locked)) {
+      locked = null
+    }
     const place = locked ?? (await placeSelect(state, state.slot))
     clearScreens()
 
@@ -204,7 +209,7 @@ function sliceEnd(state: GameState): Promise<'rewind' | 'end'> {
       <div class="panel">
         <p class="head">ここまでが遊べるぶんです</p>
         <p class="hint">
-          八日目まで。九日目〜十三日目はこれから作ります。<br><br>
+          十一日目まで。十二日目〜十三日目はこれから作ります。<br><br>
           台詞に「仮」の印が付いているところは、Fable の確定稿待ちです。
         </p>
       </div>

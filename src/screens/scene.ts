@@ -1,6 +1,7 @@
 import { app, el, esc, wait } from '../ui/dom'
 import { setBg } from '../ui/stage'
 import { fill, getEvent, visibleLine } from '../core/content'
+import { openDiary } from './diary'
 import { hashString, mulberry32 } from '../core/rng'
 import { applySet, SLOT_LABEL, SLOT_ORDER } from '../core/state'
 import type { ChoiceDef, GameEvent, GameState, Line } from '../core/types'
@@ -101,6 +102,11 @@ export async function playScene(
     }
     if (line.diary) state.todayEntries.push(line.diary)
     if (line.photo) state.todayPhoto = line.photo
+    if (line.openDiary) {
+      // 全ページの日記を開き、プレイヤーがめくって閉じるまで待つ(二周目開幕・FABLE_ANSWERS_10 C4)。
+      await openDiary(state)
+      continue
+    }
 
     if (line.choice) {
       const options = line.choice.filter(
