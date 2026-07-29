@@ -43,7 +43,7 @@ export function nameScreen(): Promise<string> {
  * スマホは並ぶが外せない——選べないのに一行説明があるのは、そのための表示。
  * 将来この画面は「机にばらっと並んだ一枚絵」になる(items.json の spot が配置用)。
  */
-export function packingScreen(loop = 1): Promise<string[]> {
+export function packingScreen(): Promise<string[]> {
   clearScreens()
   void setBg('room')
   return new Promise((resolve) => {
@@ -115,19 +115,7 @@ export function packingScreen(loop = 1): Promise<string[]> {
     }
     update()
 
-    // 二周目以降、机の前で手が止まると、母の差分一言(FABLE_ANSWERS_7 §2)。
-    // 迷わず選んで出発する周では出ない=「手が止まる」ときだけの一言。
-    let hesitateTimer = 0
-    if (loop >= 2) {
-      hesitateTimer = window.setTimeout(() => {
-        if (momLine.hidden) say('なに？ 行きたくなくなった？')
-      }, 6000)
-    }
-
-    go.addEventListener('click', () => {
-      if (hesitateTimer) clearTimeout(hesitateTimer)
-      resolve([...chosen])
-    })
+    go.addEventListener('click', () => resolve([...chosen]))
     app.appendChild(node)
   })
 }

@@ -70,7 +70,7 @@ async function runOP(state: GameState): Promise<void> {
   clearScreens()
   await playScene(state, getEvent('op_morning'), { hud: false })
 
-  const chosen = await packingScreen(state.loop)
+  const chosen = await packingScreen()
   // 巻き戻し後は前周の持ち物が残っているので、固定品まで戻してから選び直す。
   state.inventory = [...fixedItems()]
   setLoadout(
