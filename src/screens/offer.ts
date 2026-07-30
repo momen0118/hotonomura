@@ -21,15 +21,34 @@ const ACCEPT_MORNING = (offerLinesJson as { _accept_morning: string })._accept_m
 /**
  * 祠(FABLE_ANSWERS_6 §4)。日記帳がそのまま開く。見出しは「なにを、おいていきますか」。
  *
- * ・村の思い出のページを破る(長押し)= 焼く。綴じの反対側も抜け、破り縁は焦げる。
+ * ・村の思い出のページを破る(長押し)= 焼く。破いた一日ぶんが灰になり、破り縁は焦げる。
  *   これは村への好き総量を減らすが、出口は開かない(自分の畑の作物で家賃は払えない)。
+ *   ※「綴じの反対側も抜ける」挙動は日付固定のフリーノートでは意味をなさないため撤去(FABLE_ANSWERS_15 §1)。
  * ・「ささげない」→ 帰る / リュックをあける。持ち込んだ実物を差し出すと出口が開く。
  *   「リュックをあける」は棚+餌の台詞の二重フラグ(3周目〜)で出る。
+ *   リュック欄の末尾には、村で拾った小物(FABLE_ANSWERS_15 §4)も並ぶ——差し出すと灰になるが、出口は開かない。
  *
  * 実物の捧げ独白は FABLE_ANSWERS_7 §4 の確定稿(src/data/offer_lines.json)。
  * 祠そのものの演出テキスト(見出し以外)はまだ仮文言。
  */
 const PRESS_MS = 900
+
+// 村で拾った小物(FABLE_ANSWERS_15 §4)。ぽやぽや獲得機会が消える周のミスリード教材の補充。
+// リュック欄の末尾に「持ち物」として並ぶ。その周に入手した(=フラグが立っている)ものだけ。
+// 差し出すと燃えて灰になるが、出口は開かず、石の焦げも変わらない(村の水)。
+const TRINKETS: { flag: string; tag: string; label: string }[] = [
+  { flag: 'has_nukegara', tag: 'fun:nukegara', label: '蝉のぬけがら' },
+  { flag: 'has_biidama', tag: 'fun:matsuri_ramune', label: 'ラムネのビー玉' },
+  { flag: 'has_ishikoro', tag: 'fun:ishizumi', label: '川原の石ころ' },
+]
+
+// 村産小物を捧げたときの独白(FABLE_ANSWERS_15 §4・共通・確定稿)。
+// ぽやぽや専用の独白(第7便)は poyapoya の所持周のみ使用。ここは小物の共通文。
+const VILLAGE_TRINKET_LINES: string[] = [
+  '窪みに置いた。',
+  '朝、灰になっていた。',
+  '石の焦げは、変わっていなかった。',
+]
 
 // 到着時の定型テキスト(FABLE_ANSWERS_11 §5)。毎回出す。
 const ARRIVE_LINES: Line[] = [
@@ -102,7 +121,7 @@ function showBurnList(state: GameState, root: HTMLElement, done: () => void): vo
   const head = el(`
     <div class="offer-head">
       <p class="offer-title">なにを、おいていきますか</p>
-      <p class="hint">ページを長押しで破ります。破いたページの、綴じの反対側も抜けます。</p>
+      <p class="hint">ページを長押しで破ります。破いた一日ぶんが、灰になります。</p>
     </div>
   `)
   root.appendChild(head)
@@ -235,6 +254,20 @@ function showBag(state: GameState, root: HTMLElement, done: () => void): void {
     body.appendChild(pbtn)
   }
 
+  // 末尾に村で拾った小物(§4)。その周に入手済みで、まだ捧げていないものだけ。
+  for (const t of TRINKETS) {
+    if (!state.flags[t.flag]) continue
+    if (state.sacrificed.includes(t.tag)) continue
+    const btn = el(`
+      <button class="btn offer-item">
+        <span class="fill"></span>
+        <span class="txt">${esc(t.label)}<span class="sub">村で拾ったもの</span></span>
+      </button>
+    `)
+    longPress(btn, () => void offerTrinket(state, t, root, done))
+    body.appendChild(btn)
+  }
+
   const back = el('<button class="btn" data-act="back">やめる</button>')
   back.addEventListener('click', () => showExit(state, root, done))
   body.appendChild(back)
@@ -283,6 +316,24 @@ async function offerPhoneSplit(state: GameState, key: string, root: HTMLElement,
   state.flags.shrine_offer_day = state.day // 一晩一件(§5.3)
   save(state)
   await playShrineScene(state, root, lines)
+  done()
+}
+
+/**
+ * 村で拾った小物を差し出す(FABLE_ANSWERS_15 §4)。村の水の実物なので、燃えて灰になるが
+ * 出口は開かず、石の焦げも変わらない。ぽやぽやと同じ「村の水」の手触りを、小物でも教える。
+ */
+async function offerTrinket(
+  state: GameState,
+  t: { flag: string; tag: string; label: string },
+  root: HTMLElement,
+  done: () => void,
+): Promise<void> {
+  sacrifice(state, [t.tag])
+  state.flags[t.flag] = false
+  state.flags.shrine_offer_day = state.day // 一晩一件(§5.3)
+  save(state)
+  await playShrineScene(state, root, VILLAGE_TRINKET_LINES.map((n) => ({ n })))
   done()
 }
 

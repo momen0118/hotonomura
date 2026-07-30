@@ -5,8 +5,9 @@
     "day": 5,
     "slot": "noon",
     "place": "himawari",
+    "if": "!lost:fun:himawari",
     "art_note": "背景のひまわりは全数、画面奥(山側)を向けて描く。テキストでの言及は禁止。",
-    "comment": "二人きり。急接近はさせない。「意識のきっかけ」はアクスタの角度直しの手際まで。それ以上の内面描写はしない。",
+    "comment": "二人きり。急接近はさせない。「意識のきっかけ」はアクスタの角度直しの手際まで。それ以上の内面描写はしない。\n\nFABLE_ANSWERS_15 §2 依存ツリー: fun:himawari が収穫/焼却された周は、この初訪問の思い出は起きない(→ d05_himawari_gone に置き換わる)。ただし場所としてのひまわり畑と祠への動線は消えないので、unlock は両方に残す。",
     "script": [
       {"bg":"road","here":"家の前"},
       {"c":"ナツ","t":"今日はね、いいとこ連れてったげる。村で一番のとこ。"},
@@ -47,6 +48,23 @@
       },
       {"diary":{"fact":"ナツとひまわり畑に行った。背より高かった。","blackout":"ひまわり畑","tags":["fun:himawari"]}},
       {"diary":{"feeling":"すごかった。"}},
+      {"unlock":["himawari"]}
+    ]
+  },
+  {
+    "id": "d05_himawari_gone",
+    "kind": "fixed",
+    "day": 5,
+    "slot": "noon",
+    "place": "himawari",
+    "if": "lost:fun:himawari",
+    "comment": "FABLE_ANSWERS_15 §2・himawari依存: fun:himawari が失われた周のDay5昼。初訪問の思い出(ナツの連れ出し)は起きないが、場所と祠への動線は残さねばならない(unlock必須。でないと祠に行けず周が詰む)。地の文は [FABLE] 待ち——ナツの案内なしに、ひまわり畑がただそこにある周の描写。",
+    "script": [
+      {"bg":"himawari","here":"ひまわり畑"},
+      {
+        "n": "[FABLE: himawariの思い出が失われた周の、Day5昼・ひまわり畑。ナツの『村で一番のとこ』の連れ出しは起きない。畑だけがそこにある。ソラがどうそこに立つか。]",
+        "draft": true
+      },
       {"unlock":["himawari"]}
     ]
   }

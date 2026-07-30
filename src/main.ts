@@ -15,6 +15,7 @@ import {
 } from './core/content'
 import { SLOT_ORDER, clearSave, load, newGame, save, setLoadout } from './core/state'
 import { hashString, mulberry32 } from './core/rng'
+import { isLost } from './core/tags'
 import type { GameState } from './core/types'
 import { titleScreen } from './screens/title'
 import { nameScreen, packingScreen } from './screens/packing'
@@ -106,23 +107,42 @@ async function gameLoop(state: GameState): Promise<'rewind' | 'end'> {
     }
 
     // 祭りの日はコマ制を崩す。夕方開始の一本道+屋台の自由回遊。
+    // ただし fun:matsuri が収穫/焼却された周は、祭りは二度と起きない(FABLE_ANSWERS_15 §2/§3)。
+    // その周の Day 6 は「祭りのない、通常の自由日(3コマ)」+ 広場の解禁になる。
     if (dayDef.festival) {
-      await festivalDay(state)
-      await writeNightPage(state)
-      state.day += 1
-      state.slot = 'morning'
-      save(state)
-      if (getDay(state.day)) await fadeThrough(() => clearScreens())
-      continue
+      if (!isLost(state, ['fun:matsuri'])) {
+        await festivalDay(state)
+        await writeNightPage(state)
+        state.day += 1
+        state.slot = 'morning'
+        save(state)
+        if (getDay(state.day)) await fadeThrough(() => clearScreens())
+        continue
+      }
+      // 祭り消滅周。祭りがあったはずの広場を、通常の場所として解禁する。
+      if (!state.places.includes('matsuri')) {
+        state.places.push('matsuri')
+        save(state)
+      }
     }
 
     let locked = lockedPlace(state.day, state.slot)
+    // 祭り消滅周の Day 6・昼は、集会所(§15a)を通算1回だけ必ず通す。
+    // ナツに連れていかれる一拍なので、初回だけ広場へロックする(以後は自由コマ)。
+    if (dayDef.festival && state.slot === 'noon' && !state.flags.ever_shukaijo) {
+      locked = 'matsuri'
+    }
     // ロック先のイベントが世界同期で消えた周(例: タロ収穫後のDay 9〜10)は、
     // そのコマを自由コマに開放する(FABLE_ANSWERS_10 §6)。
     if (locked && !resolveEvent(state, state.day, state.slot, locked) && !resolvePrelude(state, locked)) {
       locked = null
     }
     const place = locked ?? (await placeSelect(state, state.slot))
+    // 川原を訪れた周は、川原の石ころを常に所持扱い(FABLE_ANSWERS_15 §4)。祠のリュック欄に並ぶ。
+    if (place === 'river' && !state.flags.has_ishikoro) {
+      state.flags.has_ishikoro = true
+      save(state)
+    }
     clearScreens()
 
     // 祠は場所として選べる(2周目で発見後)。ここへ行くと「なにを、おいていきますか」が開く。
