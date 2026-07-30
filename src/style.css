@@ -477,6 +477,26 @@ body {
   overflow-y: auto;
 }
 
+/* 日記のヘッダ帯。長い日記でもスクロールに追従して「とじる」が常に押せる。
+   将来のページ送りUI(固定フッター)への布石でもある。 */
+.diary-bar {
+  position: sticky;
+  top: calc(-16px - env(safe-area-inset-top, 0px));
+  z-index: 5;
+  margin: 0 -14px 12px;
+  padding: 0 14px;
+  background: #0a0a0c;
+}
+.diary-bar-inner {
+  max-width: 460px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 8px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .page {
   background: var(--paper);
   color: var(--ink);

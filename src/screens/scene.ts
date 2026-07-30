@@ -79,7 +79,7 @@ export async function playScene(
     if (line.bg) await setBg(line.bg)
     if (line.fx === 'fade') await fadeThrough(() => {}, { ms: 500 })
     if (line.here && hereEl) {
-      hereEl.textContent = line.here
+      hereEl.textContent = fill(state, line.here)
       hereEl.hidden = false
     }
     if (line.set) applySet(state, line.set)

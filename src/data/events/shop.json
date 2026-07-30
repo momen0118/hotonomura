@@ -12,12 +12,26 @@
       {"n":"並べ方の理屈は、たぶん聞いてもわからない。"},
       {"c":"おばちゃん","t":"あら、やだ、{{grandpa}}さんとこの！ 聞いてる聞いてる。都会から来るって。"},
       {"c":"おばちゃん","t":"ゆっくり見てきな。……ああ、冷たいのはそこの棚ね。"},
-      {"n":"冷蔵庫の中で、コーラとラムネが汗をかいていた。"},
-      {"n":"アイスは、その隣の箱。"},
+      {
+        "comment": "商店の世界同期(FABLE_ANSWERS_13 §4)。残存品のみ描写。全滅時は入荷なしの世間話に。タグは fun:cola/ramune/ice。",
+        "if": "lost:fun:cola && lost:fun:ramune && lost:fun:ice",
+        "n": "冷蔵庫は、うすくなっていた。"
+      },
+      {"if":"lost:fun:cola && lost:fun:ramune && lost:fun:ice","n":"……こんなに、すかすかだったっけ。"},
+      {
+        "if": "lost:fun:cola && lost:fun:ramune && lost:fun:ice",
+        "c": "おばちゃん",
+        "t": "ごめんねえ、いま入荷が少なくて。"
+      },
+      {"if":"!lost:fun:cola && !lost:fun:ramune","n":"冷蔵庫の中で、コーラとラムネが汗をかいていた。"},
+      {"if":"!lost:fun:cola && lost:fun:ramune","n":"冷蔵庫の中で、コーラが汗をかいていた。"},
+      {"if":"lost:fun:cola && !lost:fun:ramune","n":"冷蔵庫の中で、ラムネが汗をかいていた。"},
+      {"if":"!lost:fun:ice","n":"アイスは、その隣の箱。"},
       {
         "choice": [
           {
             "label": "コーラを買う",
+            "if": "!lost:fun:cola",
             "set": {"d02_bought":"cola"},
             "lines": [
               {"c":"おばちゃん","t":"はいはい。……ん、これも持ってき。おまけ。"},
@@ -36,6 +50,7 @@
           },
           {
             "label": "ラムネを買う",
+            "if": "!lost:fun:ramune",
             "set": {"d02_bought":"ramune"},
             "lines": [
               {"c":"おばちゃん","t":"ラムネ？ 渋いねえ。ビー玉、取れたら見せてね。"},
@@ -53,6 +68,7 @@
           },
           {
             "label": "アイスを買う",
+            "if": "!lost:fun:ice",
             "set": {"d02_bought":"ice"},
             "lines": [
               {"c":"おばちゃん","t":"当たり付きだよ、それ。まあ最近当たり見てないけど。"},

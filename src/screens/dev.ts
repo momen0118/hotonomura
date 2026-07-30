@@ -192,7 +192,7 @@ function openDevPanel(state: GameState, onChange: () => void): void {
   misc.appendChild(resetBtn)
 
   const info = el(
-    `<p class="hint">持ち物: ${
+    `<p class="hint">${state.loop}周目 / ${state.day}日目<br>持ち物: ${
       state.inventory.map((id) => esc(getItem(id)?.name ?? id)).join('、') || 'なし'
     }<br>置いてきた: ${
       state.leftBehind.map((id) => esc(getItem(id)?.name ?? id)).join('、') || 'なし'

@@ -14,6 +14,14 @@ const WEIGHTS = weightsJson as unknown as Record<string, number>
 /** 空っぽEDの閾値(12a §4)。残存する村の思い出の合計weightがこれ以下でED。 */
 export const EMPTY_ED_THRESHOLD = WEIGHTS['_empty_ed_threshold'] ?? 8
 
+/** 各周の徴収ノルマ = これ × 周回数(13 §1)。 */
+export const TAX_PER_LOOP = WEIGHTS['_tax_per_loop'] ?? 5
+
+/** タグ列の合計weight(祠で焼いた分の納税計算に使う)。weightのないタグは0。 */
+export function weightOfTags(tags: string[]): number {
+  return tags.reduce((sum, t) => sum + (WEIGHTS[t] ?? 0), 0)
+}
+
 interface Candidate {
   tag: string
   weight: number
@@ -43,37 +51,49 @@ export function villageWeightRemaining(state: GameState): number {
   return harvestCandidates(state).reduce((sum, c) => sum + c.weight, 0)
 }
 
+function take(state: GameState, c: Candidate): void {
+  if (!state.harvested.includes(c.tag)) state.harvested.push(c.tag)
+  sacrifice(state, [c.tag])
+}
+
 /**
- * 帰りのバスで走る収穫(12b §1)。無音で count 件(既定=周回数)を黒塗りにする。
+ * 帰りのバスで走る収穫(12b §1 + 13 §1 納税制)。無音で黒塗りにする。
+ *  - 1周目: 必ず「夏祭り」(焼きが発生しないので矛盾しない)。
+ *  - 2周目以降: 徴収ノルマ = TAX_PER_LOOP × 周回数。その周に祠で焼いたweightを充当し、
+ *    不足分だけを最上位weight帯からランダムに、ノルマ以上になるまで取る(超過繰り越しなし)。
  * 発覚は二周目以降、日記を開いた瞬間だけ(ここでは何も表示しない)。
  */
-export function harvest(state: GameState, count = state.loop): void {
+export function harvest(state: GameState): void {
   const cands = harvestCandidates(state)
   if (cands.length === 0) return
 
-  let taken: Candidate[]
   if (state.loop === 1) {
-    // 一周目は必ず「夏祭り」。無ければ最上位から(祭りに行っていない周の保険)。
     const matsuri = cands.filter((c) => c.tag === 'fun:matsuri')
-    taken = (matsuri.length > 0 ? matsuri : cands).slice(0, count)
-  } else {
-    // 最上位weight帯から順に、同weight内はシャッフルして n 件。周ごとに欠け方が変わる。
-    const rnd = mulberry32(hashString(`${state.seed}:${state.loop}:harvest`))
-    const weights = [...new Set(cands.map((c) => c.weight))].sort((a, b) => b - a)
-    const ordered: Candidate[] = []
-    for (const w of weights) {
-      const tier = cands.filter((c) => c.weight === w)
-      for (let i = tier.length - 1; i > 0; i--) {
-        const j = Math.floor(rnd() * (i + 1))
-        ;[tier[i], tier[j]] = [tier[j], tier[i]]
-      }
-      ordered.push(...tier)
-    }
-    taken = ordered.slice(0, count)
+    for (const c of matsuri.length > 0 ? matsuri : cands.slice(0, 1)) take(state, c)
+    return
   }
 
-  for (const c of taken) {
-    if (!state.harvested.includes(c.tag)) state.harvested.push(c.tag)
-    sacrifice(state, [c.tag])
+  const target = TAX_PER_LOOP * state.loop
+  const paid = Number(state.flags.loop_burned_weight) || 0
+  const remaining = target - paid
+  if (remaining <= 0) return // 焼きでノルマ達成
+
+  // 最上位weight帯から順に、同weight内はシャッフル。ノルマ(の不足分)以上になるまで取る。
+  const rnd = mulberry32(hashString(`${state.seed}:${state.loop}:harvest`))
+  const weights = [...new Set(cands.map((c) => c.weight))].sort((a, b) => b - a)
+  const ordered: Candidate[] = []
+  for (const w of weights) {
+    const tier = cands.filter((c) => c.weight === w)
+    for (let i = tier.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1))
+      ;[tier[i], tier[j]] = [tier[j], tier[i]]
+    }
+    ordered.push(...tier)
+  }
+  let collected = 0
+  for (const c of ordered) {
+    if (collected >= remaining) break
+    take(state, c)
+    collected += c.weight
   }
 }

@@ -95,10 +95,10 @@ async function gameLoop(state: GameState): Promise<'rewind' | 'end'> {
     const introKey = `intro:${state.loop}:${state.day}`
     if (state.slot === 'morning' && !state.flags[introKey]) {
       clearScreens()
-      // 朝は家で目が覚める。その日の朝が特定の場所に固定されている日は、そちらを先に出す。
+      // 先に「◯日目」を出してから背景を切り替える(でないと次シーンの背景が一瞬映る・§7.4)。
+      await dayInterstitial(state)
       const first = lockedPlace(state.day, 'morning')
       void setBg(first ? (getPlace(first)?.bg ?? 'house') : 'house')
-      await dayInterstitial(state)
       state.flags[introKey] = true
       // その日ナツがいるか。日記・イベントから `natsu_today` / `!natsu_today` で参照できる。
       state.flags.natsu_today = decideNatsuToday(state)

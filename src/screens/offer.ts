@@ -1,6 +1,7 @@
 import { app, clearScreens, el, esc } from '../ui/dom'
 import { getItem } from '../core/content'
 import { sacrifice } from '../core/tags'
+import { weightOfTags } from '../core/harvest'
 import { save } from '../core/state'
 import type { GameState, Item, Line } from '../core/types'
 import { renderPage } from './diary'
@@ -142,7 +143,10 @@ async function burnFlow(state: GameState, index: number, root: HTMLElement, done
     state.flags.burn_resolved = true
     await playShrineScene(state, root, RESOLVE_LINES)
   }
+  // 焼く前にこのページのweightを測り、納税(ノルマ充当)に積む(13 §1)。
+  const burnedWeight = weightOfTags((state.diary[index]?.entries ?? []).flatMap((e) => e.tags ?? []))
   burnPage(state, index)
+  state.flags.loop_burned_weight = (Number(state.flags.loop_burned_weight) || 0) + burnedWeight
   const n = (Number(state.flags.burn_ack_count) || 0) + 1
   state.flags.burn_ack_count = n
   // この周で焼いた回数(ナツの昔話の条件・12b §4)。2回以上で burns2。
@@ -309,21 +313,24 @@ async function offerItem(state: GameState, item: Item, root: HTMLElement, done: 
   done()
 }
 
-/** 一枚破ると、綴じの反対側も抜ける。紙は一枚で二ページぶんだから。 */
+/**
+ * 一日分(1ページ)を焼く(FABLE_ANSWERS_13 §2, 13a §1)。ページ=その日の思い出の束。
+ * 破れ跡(焦げ縁の耳)が残り、その日付の全タグが焼却=世界同期(12a §3)で世界からも消える。
+ * ※以前の「綴じの反対側も抜ける」挙動は、フリーノート・日付固定モデルでは意味をなさないため撤去。
+ */
 function burnPage(state: GameState, index: number): void {
-  const n = state.diary.length
-  for (const i of [index, n - 1 - index]) {
-    if (i < 0 || i >= n) continue
-    const page = state.diary[i]
-    if (page.torn) continue
-    page.torn = true
-    // 焼いたページの思い出タグは、以後の収穫対象から外れる
-    for (const e of page.entries) {
-      for (const tag of e.tags ?? []) {
-        if (!state.burned.includes(tag)) state.burned.push(tag)
-      }
+  const page = state.diary[index]
+  if (!page || page.torn) return
+  page.torn = true
+  const tags: string[] = []
+  for (const e of page.entries) {
+    for (const tag of e.tags ?? []) {
+      if (!state.burned.includes(tag)) state.burned.push(tag)
+      tags.push(tag)
     }
   }
+  // 焼却も収穫と同様に世界から消える(12a §3)。
+  if (tags.length > 0) sacrifice(state, tags)
 }
 
 function longPress(btn: HTMLElement, onDone: () => void): void {

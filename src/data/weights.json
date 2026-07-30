@@ -1,6 +1,7 @@
 {
   "_comment": "供物の重み(FABLE_ANSWERS_6 §3)。1周目は祭り固定、2周目以降は最上位weight帯からランダム(12b §1)。ここに載るのは村で育った思い出だけ。持ち込んだ実物(item:*)と場所タグ(place:*)は収穫対象外なので載せない。",
   "_empty_ed_threshold": 8,
+  "_tax_per_loop": 5,
   "fun:matsuri": 5,
   "taro": 5,
   "fun:himawari": 4,

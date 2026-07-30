@@ -20,6 +20,7 @@ export function nameScreen(): Promise<string> {
         <div class="panel">
           <p class="head">なまえ</p>
           <p class="lead">小学六年生。最後の夏。</p>
+          <p class="hint" style="margin:0 0 4px">主人公は、小学6年生の男の子です。</p>
           <input class="name-input" type="text" maxlength="8" value="ソラ" />
           <div style="height:14px"></div>
           <button class="btn btn-primary" data-act="ok">これでいく</button>

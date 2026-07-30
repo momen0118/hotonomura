@@ -69,7 +69,6 @@ export function renderPage(state: GameState, page: DiaryPage, writeIn = false): 
     <div class="page">
       <div class="page-date">
         <span>${page.day}日目　${esc(page.date)}</span>
-        ${page.loop > 1 ? `<span class="loop">${page.loop}周目</span>` : ''}
       </div>
       ${photoHtml}
       <ul class="entries ${writeIn ? 'write-in' : ''}">${entries}</ul>
@@ -83,53 +82,59 @@ function entryKey(e: DiaryEntryDef): string {
 }
 
 /**
- * 夜。日記は「一冊・日付固定」(FABLE_ANSWERS_12 §1, 12a §2)。
- *  - その日のページが初めてなら書き下ろす(その周の予記の起点)。
- *  - 既にあるなら、予記にない出来事(ランダム・調査)だけを余白に書き足す。行は再生成しない。
- * 黒塗り(収穫・焼却)は既存行を遺構として残す。ここでは足すだけ。
+ * 夜。日記は「一冊・日付固定のフリーノート」(FABLE_ANSWERS_12 §1 / 13a §1)。
+ *  - その日のページがまだ無ければ書き下ろす(その周の起点)。
+ *  - 既存(未破)ページがあれば、予記にない出来事だけを余白に書き足す。行は再生成しない。
+ *  - その日付の最後のページが「破られた(torn)」なら、次周にソラが新しいページとして書き直す
+ *    (捧げた記憶がないため)。内容はその周に実際に起きたこと。何もなければ「なにもなかった。」。
+ * 黒塗り(収穫・焼却)は既存行を遺構として残す。
  */
 export async function writeNightPage(state: GameState): Promise<void> {
   const dayDef = getDay(state.day)
-  const existing = state.diary.find((p) => p.day === state.day)
-  const additions: DiaryEntryDef[] = []
+  const daysPages = state.diary.filter((p) => p.day === state.day)
+  const last = daysPages.length ? daysPages[daysPages.length - 1] : null
 
-  let page: DiaryPage
-  if (!existing) {
-    page = {
-      day: state.day,
-      date: dayDef?.date ?? '',
-      loop: state.loop,
-      photo: state.todayPhoto,
-      entries: state.todayEntries.map((e) => ({ ...e, loop: state.loop })),
-    }
-    state.diary.push(page)
-  } else {
-    page = existing
-    const seen = new Set(existing.entries.map(entryKey))
+  // 既存の未破ページ → 差分だけ書き足す
+  if (last && !last.torn) {
+    const seen = new Set(last.entries.map(entryKey))
+    const additions: DiaryEntryDef[] = []
     for (const e of state.todayEntries) {
       const k = entryKey(e)
       if (seen.has(k)) continue
       seen.add(k)
       const added = { ...e, handwritten: true, loop: state.loop }
-      existing.entries.push(added)
+      last.entries.push(added)
       additions.push(added)
     }
-    // 写真は日付固定。撮っていない日に新しく撮れた周だけ補う。
-    if (!existing.photo && state.todayPhoto) existing.photo = state.todayPhoto
-  }
-
-  const firstWrite = !existing
-  state.todayEntries = []
-  state.todayPhoto = null
-
-  if (firstWrite) {
-    await showNightWrite(state, page)
+    if (!last.photo && state.todayPhoto) last.photo = state.todayPhoto
+    state.todayEntries = []
+    state.todayPhoto = null
+    // Day 1 は開幕イベント(§2)が日記を見せるので、夜画面は出さない。
+    if (state.day === 1) return
+    await showLoopNight(state, last, additions)
     return
   }
 
-  // 二周目以降。Day 1 は開幕イベント(§2)が日記を見せるので、夜画面は出さない。
-  if (state.day === 1) return
-  await showLoopNight(state, page, additions)
+  // ページが無い(初回)、または最後のページが破られている(書き直し)。新しいページを起こす。
+  const rewrite = !!last
+  const entries: DiaryEntryDef[] =
+    state.todayEntries.length > 0
+      ? state.todayEntries.map((e) => ({ ...e, loop: state.loop }))
+      : [{ fact: 'なにもなかった。', loop: state.loop }]
+  const page: DiaryPage = {
+    day: state.day,
+    date: dayDef?.date ?? '',
+    loop: state.loop,
+    photo: state.todayPhoto,
+    entries,
+  }
+  state.diary.push(page)
+  state.todayEntries = []
+  state.todayPhoto = null
+
+  // loop2+ の Day 1(破られていない初回)は開幕が見せるので夜画面なし。それ以外は書きの画面。
+  if (state.day === 1 && !rewrite && state.loop >= 2) return
+  await showNightWrite(state, page)
 }
 
 /** 一周目の夜。白紙に、その日ぶんを自分で書く。 */
@@ -177,10 +182,18 @@ async function showLoopNight(
   page: DiaryPage,
   additions: DiaryEntryDef[],
 ): Promise<void> {
+  // タロ未収穫の周の、特定日の態度差分(FABLE_ANSWERS_13 §3 / 13a §3)。
+  const taroAlive = !state.sacrificed.includes('taro')
   let lines: string[]
-  if (additions.length === 0) {
+  if (additions.length > 0) {
+    lines = ['書いてないことが、あった。']
+  } else if (taroAlive && state.day === 2) {
+    lines = ['今日の日記は、もう書いてあった。', 'ナツ、という名前も。', '書いてあったとおりのことを、あの子は言った。']
+  } else if (taroAlive && state.day === 9) {
+    lines = ['散歩のことも、書いてあった。', 'つぎのページは、めくらないで閉じた。']
+  } else {
     lines = state.flags.loopnight_seen
-      ? ['もう書いてあった。', 'ペンを置いた。']
+      ? ['今日の日記は、もう書いてあった。', 'ペンを置いた。']
       : [
           'うしろの白いページに、今日のぶんを書こうとした。',
           '今日の日付のページに、もう書いてあった。',
@@ -188,8 +201,6 @@ async function showLoopNight(
           '……書くこと、ないじゃん。',
           'ペンを置いた。',
         ]
-  } else {
-    lines = ['書いてないことが、あった。']
   }
   state.flags.loopnight_seen = true
 
@@ -210,9 +221,11 @@ export function openDiary(state: GameState): Promise<void> {
   return new Promise((resolve) => {
     const screen = el(`
       <div class="diary-screen">
-        <div style="max-width:460px;width:100%;margin:0 auto 12px;display:flex;justify-content:space-between;align-items:center">
-          <p class="head" style="margin:0">日記</p>
-          <button class="dev-btn" data-act="close">とじる</button>
+        <div class="diary-bar">
+          <div class="diary-bar-inner">
+            <p class="head" style="margin:0">日記</p>
+            <button class="dev-btn" data-act="close">とじる</button>
+          </div>
         </div>
       </div>
     `)

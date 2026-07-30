@@ -158,7 +158,10 @@ while (steps < MAX_STEPS) {
       await page.waitForTimeout(300)
       continue
     }
-    await scene.click({ position: { x: 195, y: 300 } })
+    // 日記オープン(§4.1)はフェード後にDOMへ載るので、ループ先頭の日記チェックが
+    // 一瞬すり抜けることがある。scene クリックがフェードイン中の日記に覆われても
+    // 30秒ハングしないよう短いタイムアウトで諦め、次周で日記を閉じさせる。
+    await scene.click({ position: { x: 195, y: 300 }, timeout: 1500 }).catch(() => {})
     await page.waitForTimeout(80)
     continue
   }
@@ -269,14 +272,14 @@ if (burn) {
 }
 
 console.log('祠が開いたか:', shrineOpened)
-console.log('焼いたあとの torn ページ数(綴じの反対側込みで2以上を期待):', tornCount)
+console.log('焼いたあとの torn ページ数(日単位で1件・1以上を期待):', tornCount)
 console.log('steps:', steps)
 console.log('errors:', errors.length ? errors : 'none')
 await browser.close()
 
 const fail = []
 if (!shrineOpened) fail.push('祠が開かない')
-if (tornCount < 2) fail.push('祠でページを焼いても綴じの反対側が抜けていない')
+if (tornCount < 1) fail.push('祠でページを焼いても torn になっていない')
 if (steps >= MAX_STEPS) fail.push('通しで終端に到達しませんでした')
 if (errors.length) fail.push('JSエラーあり')
 if (before.lines !== after.lines) fail.push('行が消えている(v2では行は消さない)')
