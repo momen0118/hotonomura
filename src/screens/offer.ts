@@ -14,7 +14,7 @@ import offerLinesJson from '../data/offer_lines.json'
 //   village = 村の水の実物。燃えるが出口は開かず、石も変わらない(ぽやぽや)。
 const OFFER_LINES = offerLinesJson as unknown as Record<
   string,
-  { kind: 'accept' | 'reject' | 'village'; lines: string[] }
+  { kind: 'accept' | 'reject' | 'village'; lines: string[]; morning?: string[] }
 >
 const ACCEPT_MORNING = (offerLinesJson as { _accept_morning: string })._accept_morning
 
@@ -44,11 +44,9 @@ const TRINKETS: { flag: string; tag: string; label: string }[] = [
 
 // 村産小物を捧げたときの独白(FABLE_ANSWERS_15 §4・共通・確定稿)。
 // ぽやぽや専用の独白(第7便)は poyapoya の所持周のみ使用。ここは小物の共通文。
-const VILLAGE_TRINKET_LINES: string[] = [
-  '窪みに置いた。',
-  '朝、灰になっていた。',
-  '石の焦げは、変わっていなかった。',
-]
+// FABLE_ANSWERS_16 §1 で夜(窪みに置く)と翌朝(灰になっていた)に分割。
+const TRINKET_EVENING: string[] = ['窪みに置いた。']
+const TRINKET_MORNING: string[] = ['朝、灰になっていた。', '石の焦げは、変わっていなかった。']
 
 // 到着時の定型テキスト(FABLE_ANSWERS_11 §5)。毎回出す。
 const ARRIVE_LINES: Line[] = [
@@ -173,8 +171,9 @@ async function burnFlow(state: GameState, index: number, root: HTMLElement, done
   state.flags.loop_burns = loopBurns
   if (loopBurns >= 2) state.flags.burns2 = true
   state.flags.shrine_offer_day = state.day // 一晩一件(§5.3)
+  // 「朝、たしかめに行った」は同日には出さず、翌朝コマ選択前に強制再生する(FABLE_ANSWERS_16 §1)。
+  state.pendingMorning = burnMorningLines(n)
   save(state)
-  await playShrineScene(state, root, burnMorningLines(n).map((t) => ({ n: t })))
   done()
 }
 
@@ -312,8 +311,9 @@ async function offerPhoneSplit(state: GameState, key: string, root: HTMLElement,
   const lines: Line[] = (data?.lines ?? []).map((t) => ({ n: t }))
   state.exitOpen = true
   state.flags.stone_char = (Number(state.flags.stone_char) || 0) + 1
-  lines.push({ n: ACCEPT_MORNING })
+  state.flags.offered_item = key // 捧げて帰るEDの一景(トーク履歴/音楽ライブラリ)
   state.flags.shrine_offer_day = state.day // 一晩一件(§5.3)
+  state.pendingMorning = [ACCEPT_MORNING] // 「朝、なくなっていた」は翌朝(FABLE_ANSWERS_16 §1)
   save(state)
   await playShrineScene(state, root, lines)
   done()
@@ -332,8 +332,9 @@ async function offerTrinket(
   sacrifice(state, [t.tag])
   state.flags[t.flag] = false
   state.flags.shrine_offer_day = state.day // 一晩一件(§5.3)
+  state.pendingMorning = TRINKET_MORNING // 「朝、灰になっていた」は翌朝(FABLE_ANSWERS_16 §1)
   save(state)
-  await playShrineScene(state, root, VILLAGE_TRINKET_LINES.map((n) => ({ n })))
+  await playShrineScene(state, root, TRINKET_EVENING.map((n) => ({ n })))
   done()
 }
 
@@ -345,19 +346,24 @@ async function offerItem(state: GameState, item: Item, root: HTMLElement, done: 
   const data = OFFER_LINES[item.id]
   const kind = data?.kind ?? 'accept'
   const lines: Line[] = (data?.lines ?? [`${item.name}を、窪みに置いた。`]).map((t) => ({ n: t }))
+  let morning = data?.morning ?? []
 
   if (kind === 'accept') {
     // 外の熟成品。受理され、出口が開き、石の焦げがひとつ濃くなる。
     sacrifice(state, item.tags ?? [`item:${item.id}`])
     state.exitOpen = true
     state.flags.stone_char = (Number(state.flags.stone_char) || 0) + 1
-    lines.push({ n: ACCEPT_MORNING })
+    // 捧げて帰るEDの「一景」を、最後に受理された品で決める(FABLE_ANSWERS_16 §4)。
+    state.flags.offered_item = item.id
+    if (morning.length === 0) morning = [ACCEPT_MORNING]
   } else if (kind === 'village') {
     // 村の水の実物(ぽやぽや)。燃えるが出口は開かず、石の焦げも変わらない。
     sacrifice(state, item.tags ?? [`item:${item.id}`])
   }
   // reject(夏期講習テキスト・結晶キット)は捧げない。実物は残り、出口も開かない。
   state.flags.shrine_offer_day = state.day // 一晩一件(§5.3)。受理・非受理・村の水すべて当日を締める。
+  // 「朝、たしかめに行った」ぶんは翌朝に回す(FABLE_ANSWERS_16 §1)。
+  state.pendingMorning = morning
   save(state)
 
   await playShrineScene(state, root, lines)

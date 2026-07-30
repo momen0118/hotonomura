@@ -224,6 +224,11 @@ export interface GameState {
   burned: string[]
   /** 実物を祠に差し出して出口が開いたか(捧げて帰るEDへの唯一の鍵) */
   exitOpen: boolean
+  /**
+   * 祠で捧げ/焼きをした翌朝に、コマ選択の前に強制再生する「朝、たしかめに行った」テキスト
+   * (FABLE_ANSWERS_16 §1)。同日中には出さない(時系列の矛盾を消す)。翌朝に出して空にする。
+   */
+  pendingMorning?: string[]
   /** その日ぶんの日記の下書き。夜に1ページへまとめる */
   todayEntries: DiaryEntryDef[]
   todayPhoto: PhotoDef | null

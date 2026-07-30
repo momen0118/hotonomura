@@ -46,11 +46,13 @@
       {"if":"item:walkie","c":"ナツ","t":"……おやすみ。","tags":["fun:hanabi"]},
       {"if":"item:walkie","c":"{{name}}","t":"おやすみ。","tags":["fun:hanabi"]},
       {"if":"item:walkie","n":"電源は、切らないで寝た。","tags":["fun:hanabi"]},
-      {
-        "if": "lost:fun:hanabi",
-        "n": "[FABLE: 花火が失われた周のDay13夜。村の子の合流も花火もない、静かな夜の地の文。夕方の『約束ね』は残っている前提。]",
-        "draft": true
-      },
+      {"if":"lost:fun:hanabi","bg":"engawa_night","here":"家"},
+      {"if":"lost:fun:hanabi","n":"夜、縁側に出た。"},
+      {"if":"lost:fun:hanabi","n":"明日で、終わりだ。"},
+      {"if":"lost:fun:hanabi","n":"蛙が鳴いていた。それだけだった。"},
+      {"if":"lost:fun:hanabi","n":"最後の夜って、もっとなにかある気がしていた。"},
+      {"if":"lost:fun:hanabi","n":"何を期待していたのか、じぶんでもわからなかった。"},
+      {"if":"lost:fun:hanabi","n":"早めに、布団に入った。"},
       {"diary":{"fact":"ナツと花火をした。みんな来た。","blackout":"花火","tags":["fun:hanabi"]}},
       {"diary":{"fact":"線香花火は、ナツが勝った。","blackout":"線香花火","tags":["fun:hanabi"]}},
       {

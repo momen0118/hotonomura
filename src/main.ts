@@ -21,9 +21,9 @@ import { titleScreen } from './screens/title'
 import { nameScreen, packingScreen } from './screens/packing'
 import { dayInterstitial, placeSelect } from './screens/day'
 import { playScene } from './screens/scene'
-import { openDiary, writeNightPage } from './screens/diary'
+import { writeNightPage } from './screens/diary'
 import { festivalDay } from './screens/festival'
-import { homecoming } from './screens/homecoming'
+import { endingFlow } from './screens/ending'
 import { shrineScreen } from './screens/offer'
 import { devButton } from './screens/dev'
 
@@ -54,12 +54,20 @@ async function main(): Promise<void> {
 
   mountDev(state)
   for (;;) {
-    const outcome = await gameLoop(state)
-    if (outcome !== 'rewind') break
-    // 巻き戻し(お代わり)。白む→出発の朝(OP)に戻る(FABLE_ANSWERS_7 §2)。
-    // 持ち物選択を毎周やり直す=供物計画の中核。日記帳の受け渡しも毎周同一。
-    await runOP(state)
-    await fadeThrough(() => clearScreens())
+    await gameLoop(state)
+    // Day 14(帰る日)と帰還分岐。EDに達したか、白んで次の周(お代わり)か。
+    const outcome = await endingFlow(state)
+    if (outcome === 'rewind') {
+      // 巻き戻し(お代わり)。白む→出発の朝(OP)に戻る(FABLE_ANSWERS_7 §2)。
+      // 持ち物選択を毎周やり直す=供物計画の中核。日記帳の受け渡しも毎周同一。
+      await runOP(state)
+      await fadeThrough(() => clearScreens())
+      continue
+    }
+    // EDに到達。セーブを消してタイトルへ戻す(ED達成の記録は別領域なので保持される)。
+    clearSave()
+    location.reload()
+    return
   }
 }
 
@@ -90,7 +98,7 @@ function mountDev(state: GameState): void {
   app.appendChild(devButton(state, () => save(state)))
 }
 
-async function gameLoop(state: GameState): Promise<'rewind' | 'end'> {
+async function gameLoop(state: GameState): Promise<void> {
   while (getDay(state.day)) {
     const dayDef = getDay(state.day)!
     const introKey = `intro:${state.loop}:${state.day}`
@@ -104,6 +112,22 @@ async function gameLoop(state: GameState): Promise<'rewind' | 'end'> {
       // その日ナツがいるか。日記・イベントから `natsu_today` / `!natsu_today` で参照できる。
       state.flags.natsu_today = decideNatsuToday(state)
       save(state)
+    }
+
+    // 前夜に祠で捧げ/焼きをしていたら、コマ選択の前に「朝、たしかめに行った」を強制再生する
+    // (FABLE_ANSWERS_16 §1)。コマは消費しない。祠の窪みを見に行く場面なので背景は祠。
+    if (state.slot === 'morning' && state.pendingMorning && state.pendingMorning.length > 0) {
+      const lines = state.pendingMorning
+      state.pendingMorning = []
+      save(state)
+      await playScene(
+        state,
+        { id: 'shrine_morning', kind: 'fixed', place: 'shrine', script: [{ bg: 'shrine' }, ...lines.map((n) => ({ n }))] },
+        { hud: false },
+      )
+      // 確認のあと、その日の場所の背景へ戻す。
+      const back = lockedPlace(state.day, 'morning')
+      await setBg(back ? (getPlace(back)?.bg ?? 'house') : 'house')
     }
 
     // 祭りの日はコマ制を崩す。夕方開始の一本道+屋台の自由回遊。
@@ -126,11 +150,22 @@ async function gameLoop(state: GameState): Promise<'rewind' | 'end'> {
       }
     }
 
+    // himawari を失った周は、Day 5昼の「ナツが連れていく」初訪問が起きない(FABLE_ANSWERS_16 §3)。
+    // その周のDay 5昼は自由コマにし、ひまわり畑を先に解禁して選べるようにする(祠動線を残す)。
+    if (state.day === 5 && isLost(state, ['fun:himawari']) && !state.places.includes('himawari')) {
+      state.places.push('himawari')
+      save(state)
+    }
+
     let locked = lockedPlace(state.day, state.slot)
     // 祭り消滅周の Day 6・昼は、集会所(§15a)を通算1回だけ必ず通す。
     // ナツに連れていかれる一拍なので、初回だけ広場へロックする(以後は自由コマ)。
     if (dayDef.festival && state.slot === 'noon' && !state.flags.ever_shukaijo) {
       locked = 'matsuri'
+    }
+    // himawari 消滅周の Day 5昼はロックを外す(自由コマ)。
+    if (state.day === 5 && state.slot === 'noon' && isLost(state, ['fun:himawari'])) {
+      locked = null
     }
     // ロック先のイベントが世界同期で消えた周(例: タロ収穫後のDay 9〜10)は、
     // そのコマを自由コマに開放する(FABLE_ANSWERS_10 §6)。
@@ -178,8 +213,7 @@ async function gameLoop(state: GameState): Promise<'rewind' | 'end'> {
 
     await finishSlot(state)
   }
-
-  return await sliceEnd(state)
+  // Day 1〜13 を終えた。Day 14(帰る日)と帰還分岐は endingFlow が引き取る。
 }
 
 /** そのコマを終える。夕方なら夜の日記を書いて翌日へ。祠と通常コマで共用する。 */
@@ -215,43 +249,6 @@ function emptySlot(): Promise<void> {
       node.remove()
       resolve()
     })
-    app.appendChild(node)
-  })
-}
-
-function sliceEnd(state: GameState): Promise<'rewind' | 'end'> {
-  clearScreens()
-  void setBg('title')
-  return new Promise((resolve) => {
-  const node = el(`
-    <div class="screen pad">
-      <div class="spacer"></div>
-      <div class="panel">
-        <p class="head">ここまでが遊べるぶんです</p>
-        <p class="hint">
-          十三日目まで。十四日目(帰る日)はまだ仮で、この先で作ります。<br><br>
-          台詞に「仮」の印が付いているところは、Fable の確定稿待ちです。
-        </p>
-      </div>
-      <div style="height:14px"></div>
-      <div class="stack">
-        <button class="btn btn-primary" data-act="diary">日記を最初から読む</button>
-        <button class="btn" data-act="rewind">
-          帰る日と巻き戻しを見る
-          <span class="sub">確認用。八日目〜十四日目は仮のダイジェストで飛ばします。</span>
-        </button>
-        <button class="btn" data-act="title">タイトルへ</button>
-      </div>
-      <div class="spacer"></div>
-    </div>
-  `)
-    node.querySelector('[data-act="diary"]')!.addEventListener('click', () => void openDiary(state))
-    node.querySelector('[data-act="rewind"]')!.addEventListener('click', async () => {
-      node.remove()
-      await homecoming(state)
-      resolve('rewind')
-    })
-    node.querySelector('[data-act="title"]')!.addEventListener('click', () => location.reload())
     app.appendChild(node)
   })
 }

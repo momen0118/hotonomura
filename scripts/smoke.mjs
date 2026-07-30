@@ -36,7 +36,7 @@ await page.waitForTimeout(500)
 
 let steps = 0
 let packed = false
-let rewound = false
+let packCount = 0
 const MAX_STEPS = 6000
 while (steps < MAX_STEPS) {
   steps++
@@ -53,22 +53,21 @@ while (steps < MAX_STEPS) {
     continue
   }
 
+  // ED到達(おわり画面)。実物受理も残weight≤8も通常は起きないが、来たら記録して抜ける。
   if (await page.$('[data-act="title"]')) {
-    if (!rewound) {
-      // 一周目の終わり。帰宅日→「なにを、おいていきますか」→巻き戻しを通す。
-      await shot('90-slice-end')
-      rewound = true
-      await page.click('[data-act="rewind"]')
-      await page.waitForTimeout(400)
-      continue
-    }
-    await shot('93-slice-end-loop2')
+    await shot('95-ending-card')
     break
   }
 
   // リュック詰め: 固定枠(スマホ)以外から4つ選ぶ。巻き戻し後のOPでも毎回やり直す。
+  // 各周のOPで出るので、packCount で周を数える。loop1+loop2 を通したら(3周目のOP)止める。
   const packGo = await page.$('[data-act="go"]')
   if (packGo) {
+    packCount++
+    if (packCount >= 3) {
+      await shot('93-loop2-end')
+      break
+    }
     const rows = await page.$$('.pack-item:not(.fixed)')
     for (const i of [0, 2, 4, 7]) await rows[i].click()
     if (!packed) {

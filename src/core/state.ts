@@ -2,7 +2,34 @@ import type { GameState, Slot } from './types'
 
 const SAVE_KEY = 'hotonomura.save.v1'
 // データの形が変わったらここを上げる。古いセーブは読まずに捨てる。
-const STATE_VERSION = 3
+const STATE_VERSION = 4
+
+// ED達成の記録(FABLE_ANSWERS_16 §6)。セーブとは別の領域に置き、
+// 「はじめから」でセーブを消しても達成記録は保持する(周回数と同じメタ領域)。
+const ENDINGS_KEY = 'hotonomura.endings.v1'
+
+/** 到達したEDを記録する(重複は無視)。 */
+export function recordEnding(id: string): void {
+  try {
+    const seen = new Set(endingsSeen())
+    seen.add(id)
+    localStorage.setItem(ENDINGS_KEY, JSON.stringify([...seen]))
+  } catch {
+    // 記録できなくても進行は止めない。
+  }
+}
+
+/** これまでに到達したEDの一覧。 */
+export function endingsSeen(): string[] {
+  try {
+    const raw = localStorage.getItem(ENDINGS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as unknown
+    return Array.isArray(parsed) ? (parsed as string[]) : []
+  } catch {
+    return []
+  }
+}
 
 export const SLOT_ORDER: Slot[] = ['morning', 'noon', 'evening']
 
@@ -32,6 +59,7 @@ export function newGame(playerName: string, fixed: string[]): GameState {
     harvested: [],
     burned: [],
     exitOpen: false,
+    pendingMorning: [],
     todayEntries: [],
     todayPhoto: null,
     seed: Math.floor(Math.random() * 0x7fffffff),
@@ -64,6 +92,7 @@ export function rewind(state: GameState, initialPlaces: string[]): void {
   state.ambientLog = {}
   state.todayEntries = []
   state.todayPhoto = null
+  state.pendingMorning = []
   state.money = 0
   state.stallsVisited = []
   state.places = [...initialPlaces]
