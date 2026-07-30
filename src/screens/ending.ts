@@ -26,6 +26,18 @@ const SCENE_BY_ITEM: Record<string, string> = {
  * 優先順は「実物受理 > 空っぽ」。EDに達したら達成を記録してタイトルへ。
  */
 export async function endingFlow(state: GameState): Promise<'rewind' | 'ended'> {
+  // ナツED(§17 §2)。Day 13夕方の「…………」で成立。Day 14 には進まない。
+  if (state.flags.natsu_ed) {
+    clearScreens()
+    await playScene(state, getEvent('natsu_ed_main'), { hud: false })
+    // 何年後かの夏へ、長めのフェード。
+    await fadeThrough(async () => { clearScreens() }, { ms: 1600 })
+    await playScene(state, getEvent('natsu_ed_epilogue'), { hud: false })
+    recordEnding('natsu')
+    await endCard()
+    return 'ended'
+  }
+
   state.day = 14
   state.slot = 'morning'
   save(state)

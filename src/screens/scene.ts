@@ -159,29 +159,46 @@ function showText(
     box.appendChild(el('<div class="draft-mark">仮</div>'))
   }
 
+  // メッセージ枠の高さは固定(本文3行ぶん)。長文は枠を縦に伸ばさず、既存の▼送りで
+  // ページ分割して見せる(FABLE_ANSWERS_17 §0)。短い行は1ページなので従来と同じ挙動。
+  const pages = paginate(bodyEl, text)
+
   return new Promise((resolve) => {
+    let page = 0
     let idx = 0
     let done = false
+    let timer = 0
     nextEl.hidden = true
     bodyEl.textContent = ''
 
     const finish = () => {
       done = true
-      bodyEl.textContent = text
+      bodyEl.textContent = pages[page]
       nextEl.hidden = false
       clearInterval(timer)
     }
 
-    const timer = setInterval(() => {
-      idx++
-      bodyEl.textContent = text.slice(0, idx)
-      if (idx >= text.length) finish()
-    }, Math.max(6, state.settings.textSpeed))
+    const startPage = () => {
+      idx = 0
+      done = false
+      nextEl.hidden = true
+      bodyEl.textContent = ''
+      timer = window.setInterval(() => {
+        idx++
+        bodyEl.textContent = pages[page].slice(0, idx)
+        if (idx >= pages[page].length) finish()
+      }, Math.max(6, state.settings.textSpeed))
+    }
 
     const onTap = () => {
       if (document.querySelector('.backlog')) return
       if (!done) {
         finish()
+        return
+      }
+      if (page < pages.length - 1) {
+        page++
+        startPage()
         return
       }
       scene.removeEventListener('click', onTap)
@@ -196,7 +213,59 @@ function showText(
     }
     scene.addEventListener('click', onTap)
     window.addEventListener('keydown', onKey)
+    startPage()
   })
+}
+
+/**
+ * 一行のテキストを、メッセージ枠(高さ固定)に収まるページに割る(FABLE_ANSWERS_17 §0)。
+ * 枠に収まる行はそのまま1ページ。あふれる行だけ、句読点で切って複数ページにする。
+ * bodyEl の実寸で測るので、フォント・幅が変わっても追従する。
+ */
+function paginate(bodyEl: HTMLElement, text: string): string[] {
+  const fits = (s: string): boolean => {
+    bodyEl.textContent = s
+    return bodyEl.scrollHeight <= bodyEl.clientHeight + 1
+  }
+  if (fits(text)) {
+    bodyEl.textContent = ''
+    return [text]
+  }
+  const pages: string[] = []
+  let rest = text
+  // 無限ループ防止(1文字ずつは必ず進む)。
+  while (rest.length > 0) {
+    if (fits(rest)) {
+      pages.push(rest)
+      break
+    }
+    // 収まる最大の接頭辞を二分探索。
+    let lo = 1
+    let hi = rest.length
+    let best = 1
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1
+      if (fits(rest.slice(0, mid))) {
+        best = mid
+        lo = mid + 1
+      } else {
+        hi = mid - 1
+      }
+    }
+    // なるべく句読点で切る(枠の後半にある区切りだけ採用。前すぎる切れ目は使わない)。
+    const seg = rest.slice(0, best)
+    const brk = Math.max(
+      seg.lastIndexOf('。'),
+      seg.lastIndexOf('！'),
+      seg.lastIndexOf('？'),
+      seg.lastIndexOf('、'),
+    )
+    const cut = brk >= Math.floor(best * 0.5) ? brk + 1 : best
+    pages.push(rest.slice(0, cut))
+    rest = rest.slice(cut)
+  }
+  bodyEl.textContent = ''
+  return pages
 }
 
 function askChoice(state: GameState, scene: HTMLElement, options: ChoiceDef[]): Promise<ChoiceDef> {

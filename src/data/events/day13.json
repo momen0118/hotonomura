@@ -5,16 +5,54 @@
     "day": 13,
     "slot": "evening",
     "place": "himawari",
-    "comment": "最後の日・夕方のひまわり約束→夜の花火(FABLE_ANSWERS_11 §4)。表情の意味づけ禁止(「よく見えなかった」まで)。翌日巻き戻される直前の感情がここ。トランシーバー所持時のみ最後の布団パート。\n\nFABLE_ANSWERS_15 §2 依存ツリー: 夜の花火一式(村の子の合流・線香花火・トランシーバーの夜)は fun:hanabi の配下。fun:hanabi が収穫/焼却された周は夜の各行(tags:fun:hanabi)が世界同期で飛び、静かな夜になる。夕方の「約束ね」(fun:yakusoku)は独立して残る。トランシーバーの夜の日記は if で二重にガード(item:walkie かつ 花火が起きた周)。花火消滅周の『静かな夜』の地の文は [FABLE] 待ち。",
+    "if": "!natsu_farewell_active",
+    "comment": "最後の日・夕方のひまわり約束→夜(FABLE_ANSWERS_11 §4)。通常周(ナツED条件を満たさない周)。ナツの家に行って読まなかった周は d13_farewell に差し替わる(natsu_farewell_active は main.ts が Day13朝に計算)。本体は d13_body に切り出して共用。",
     "script": [
       {"bg":"himawari","here":"ひまわり畑"},
       {"c":"ナツ","t":"明日、帰るんだよね。"},
       {"c":"{{name}}","t":"うん。朝のバス。"},
       {"c":"ナツ","t":"……来年も、来る？"},
       {"c":"{{name}}","t":"来るよ。"},
+      {"include":"d13_body"}
+    ]
+  },
+  {
+    "id": "d13_farewell",
+    "kind": "fixed",
+    "day": 13,
+    "slot": "evening",
+    "place": "himawari",
+    "if": "natsu_farewell_active",
+    "comment": "ナツED分岐(FABLE_ANSWERS_17 §2)。ナツの家に行き、ノートを読まなかった周のDay 13夕方。『来るよ。』→通常進行(d13_body)。『…………』→natsu_ed を立て、gameLoop が打ち切って endingFlow のナツEDへ。read_note=true の周は natsu_farewell_active が立たないので、この選択は出ない。",
+    "script": [
+      {"bg":"himawari","here":"ひまわり畑"},
+      {"c":"ナツ","t":"明日、帰るんだよね。"},
+      {"c":"{{name}}","t":"うん。朝のバス。"},
+      {"c":"ナツ","t":"……来年も、来る？"},
+      {
+        "choice": [
+          {"label":"来るよ。","lines":[{"include":"d13_body"}]},
+          {"label":"…………","set":{"natsu_ed":true}}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "d13_body",
+    "kind": "fixed",
+    "place": "none",
+    "comment": "Day 13夕方の本体(FABLE_ANSWERS_11 §4)。d13_evening と d13_farewell の『来るよ。』から include される。表情の意味づけ禁止(「よく見えなかった」まで)。トランシーバー所持時のみ最後の布団パート。\n\nFABLE_ANSWERS_15 §2 依存ツリー: 夜の花火一式(村の子の合流・線香花火・トランシーバーの夜)は fun:hanabi の配下。fun:hanabi が収穫/焼却された周は夜の各行(tags:fun:hanabi)が飛び、静かな夜(FABLE_ANSWERS_16 §2 確定稿)になる。夕方の約束(fun:yakusoku)は独立して残る。",
+    "script": [
       {"c":"ナツ","t":"そっか。……約束ね。"},
       {"n":"ひまわりは、あいかわらず、ぜんぶ同じほうを向いていた。"},
       {"n":"ナツの顔は、夕方の光で、よく見えなかった。"},
+      {"if":"lost:fun:hanabi","bg":"engawa_night","here":"家"},
+      {"if":"lost:fun:hanabi","n":"夜、縁側に出た。"},
+      {"if":"lost:fun:hanabi","n":"明日で、終わりだ。"},
+      {"if":"lost:fun:hanabi","n":"蛙が鳴いていた。それだけだった。"},
+      {"if":"lost:fun:hanabi","n":"最後の夜って、もっとなにかある気がしていた。"},
+      {"if":"lost:fun:hanabi","n":"何を期待していたのか、じぶんでもわからなかった。"},
+      {"if":"lost:fun:hanabi","n":"早めに、布団に入った。"},
       {"bg":"engawa_night","here":"家","tags":["fun:hanabi"]},
       {"n":"夜、縁側の前にナツが来た。両手に、袋。","tags":["fun:hanabi"]},
       {"c":"ナツ","t":"じゃーん。花火。あと、みんな呼んじゃった。","tags":["fun:hanabi"]},
@@ -46,13 +84,6 @@
       {"if":"item:walkie","c":"ナツ","t":"……おやすみ。","tags":["fun:hanabi"]},
       {"if":"item:walkie","c":"{{name}}","t":"おやすみ。","tags":["fun:hanabi"]},
       {"if":"item:walkie","n":"電源は、切らないで寝た。","tags":["fun:hanabi"]},
-      {"if":"lost:fun:hanabi","bg":"engawa_night","here":"家"},
-      {"if":"lost:fun:hanabi","n":"夜、縁側に出た。"},
-      {"if":"lost:fun:hanabi","n":"明日で、終わりだ。"},
-      {"if":"lost:fun:hanabi","n":"蛙が鳴いていた。それだけだった。"},
-      {"if":"lost:fun:hanabi","n":"最後の夜って、もっとなにかある気がしていた。"},
-      {"if":"lost:fun:hanabi","n":"何を期待していたのか、じぶんでもわからなかった。"},
-      {"if":"lost:fun:hanabi","n":"早めに、布団に入った。"},
       {"diary":{"fact":"ナツと花火をした。みんな来た。","blackout":"花火","tags":["fun:hanabi"]}},
       {"diary":{"fact":"線香花火は、ナツが勝った。","blackout":"線香花火","tags":["fun:hanabi"]}},
       {

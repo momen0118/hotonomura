@@ -348,11 +348,25 @@
       {"n":"軒下で、ナツが笑いだした。"},
       {"c":"ナツ","t":"{{name}}、前髪。ぺったぺた。"},
       {"c":"{{name}}","t":"ナツもだよ。"},
-      {"n":"雨は、十分で上がった。"},
-      {"n":"上がったあとの道は、土のにおいがした。"},
+      {
+        "comment": "3周目以降+その周でナツと十分過ごした(natsu_ready)+まだナツの家に行っていない周は、本降りになってナツの家へ(FABLE_ANSWERS_17 §1)。natsu_ie が natsu_house を立てるので、以降の通常の締めは !natsu_house で自動的に飛ぶ。"
+      },
+      {"if":"loop>=3 && natsu_ready && !natsu_house","n":"雨は、上がらなかった。"},
+      {"if":"loop>=3 && natsu_ready && !natsu_house","n":"通り雨だと思っていたものが、本降りになった。"},
+      {
+        "if": "loop>=3 && natsu_ready && !natsu_house",
+        "c": "ナツ",
+        "t": "……これはだめだ。{{name}}、うち来る？ すぐそこだから。"
+      },
+      {"if":"loop>=3 && natsu_ready && !natsu_house","include":"natsu_ie"},
+      {"if":"!natsu_house","n":"雨は、十分で上がった。"},
+      {"if":"!natsu_house","n":"上がったあとの道は、土のにおいがした。"},
       {"set":{"tooriame_done":true}},
-      {"diary":{"fact":"通り雨にやられた。前髪がぺったぺたになった。","blackout":"通り雨","tags":["fun:tooriame"]}},
-      {"diary":{"feeling":"ちょっと笑った。"}}
+      {
+        "if": "!natsu_house",
+        "diary": {"fact":"通り雨にやられた。前髪がぺったぺたになった。","blackout":"通り雨","tags":["fun:tooriame"]}
+      },
+      {"if":"!natsu_house","diary":{"feeling":"ちょっと笑った。"}}
     ]
   },
   {

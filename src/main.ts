@@ -111,6 +111,16 @@ async function gameLoop(state: GameState): Promise<void> {
       state.flags[introKey] = true
       // その日ナツがいるか。日記・イベントから `natsu_today` / `!natsu_today` で参照できる。
       state.flags.natsu_today = decideNatsuToday(state)
+      // その周でナツと過ごした日を数える。2日以上で natsu_ready(ナツの家の解禁条件・§17 §1)。
+      if (state.flags.natsu_today) {
+        const nd = (Number(state.flags.natsu_days) || 0) + 1
+        state.flags.natsu_days = nd
+        if (nd >= 2) state.flags.natsu_ready = true
+      }
+      // Day 13朝、ナツED分岐の成立を確定する(ナツの家に行き、ノートを読まなかった周・§17 §2)。
+      if (state.day === 13) {
+        state.flags.natsu_farewell_active = !!state.flags.natsu_house && !state.flags.read_note
+      }
       save(state)
     }
 
@@ -210,6 +220,10 @@ async function gameLoop(state: GameState): Promise<void> {
       // データがまだ無いコマ。縦切り中は起こりうるので、黙って一コマ進める。
       await emptySlot()
     }
+
+    // ナツED(§17 §2): Day 13夕方の「…………」で natsu_ed が立ったら、通常進行を打ち切って
+    // 夜の日記を書かずに endingFlow のナツEDへ渡す。
+    if (state.flags.natsu_ed) break
 
     await finishSlot(state)
   }

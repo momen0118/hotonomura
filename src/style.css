@@ -320,10 +320,13 @@ body {
 }
 
 /* 鉤括弧は出さない。地の文と台詞は、話者名と文字色で分ける。 */
+/* 枠の高さは本文3行ぶんに固定。長文でも縦に伸びず、あふれは▼送りでページ分割
+   (FABLE_ANSWERS_17 §0)。scene.ts の paginate() がこの clientHeight で行を割る。 */
 .body {
   font-size: 1.02rem;
   line-height: 1.95;
-  min-height: 3.9em;
+  height: 5.85em;
+  overflow: hidden;
   white-space: pre-wrap;
   word-break: normal;
   overflow-wrap: anywhere;
