@@ -5,8 +5,13 @@
     "day": 11,
     "slot": "morning",
     "place": "road",
-    "comment": "堤防解禁(FABLE_ANSWERS_10 §5)。前日の約束(10a §4)の履行としてナツが言う。teibou を解放。",
-    "script": [{"bg":"road","here":"道"},{"c":"ナツ","t":"水、引いたから。堤防、行けるよ。釣り見せたげる。"},{"unlock":["teibou"]}]
+    "comment": "堤防解禁(FABLE_ANSWERS_10 §5 / 19b §3恒常物)。堤防(地形)は体験タグに依存せず Day 11に機械的に解禁する(unlock は無条件)。fun:tsuri がある周はナツが解禁を告げる。fun:tsuri が食われた周は告知が一行のみ(「川の水が、引いていた。」)になり、ナツの解禁台詞・釣り見学(d11_noon)は不発。",
+    "script": [
+      {"bg":"road","here":"道"},
+      {"if":"!lost:fun:tsuri","c":"ナツ","t":"水、引いたから。堤防、行けるよ。釣り見せたげる。"},
+      {"if":"lost:fun:tsuri","n":"川の水が、引いていた。"},
+      {"unlock":["teibou"]}
+    ]
   },
   {
     "id": "d11_noon",
@@ -14,7 +19,8 @@
     "day": 11,
     "slot": "noon",
     "place": "teibou",
-    "comment": "堤防・釣り・ツリさん初接触(§5)。3周目・棚を見た周だけ、末尾で餌の台詞(teibou_bait)が向こうから来る。",
+    "tags": ["fun:tsuri"],
+    "comment": "堤防・釣り・ツリさん初接触(§5)。3周目・棚を見た周だけ、末尾で餌の台詞(teibou_bait)が向こうから来る。FABLE_ANSWERS_19b §3で登載イベント化: fun:tsuri が食われた周は釣り見学ごと不発(告知は d11_morning の一行のみ)。堤防は解禁されているので、その周の昼は堤防の日常(ambient)か自由コマになる。",
     "script": [
       {"bg":"river","here":"堤防"},
       {"n":"堤防の上は、風が通っていた。"},

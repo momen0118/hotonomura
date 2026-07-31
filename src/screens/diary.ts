@@ -194,6 +194,16 @@ async function showLoopNight(
   let lines: string[]
   if (additions.length > 0) {
     lines = ['書いてないことが、あった。']
+  } else if (page.entries.some((e) => !!e.fact && isLost(state, e.tags))) {
+    // 夜定型・第三形態(FABLE_ANSWERS_19c §3): 非登載イベントが今日も起きたが、対応する予記行が
+    // すでに黒塗り済みの夜。黒の上からは、書けない。理由の説明はしない。以後この夜は追記なし。
+    lines = [
+      '今日の日付のところは、黒く塗られていた。',
+      '書こうとしたことが、この下に書いてある気がした。',
+      '気がするだけで、読めない。',
+      '黒の上から書く気には、ならなかった。',
+      'ペンを置いた。',
+    ]
   } else if (taroAlive && state.day === 2) {
     lines = ['今日の日記は、もう書いてあった。', 'ナツ、という名前も。', '書いてあったとおりのことを、あの子は言った。']
   } else if (taroAlive && state.day === 9) {

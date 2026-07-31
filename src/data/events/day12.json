@@ -24,7 +24,8 @@
     "day": 12,
     "slot": "evening",
     "place": "park",
-    "comment": "缶蹴り(§3、11a §1)。ナツ参加(natsu_today強制true日に12を追加)。",
+    "tags": ["fun:kankeri"],
+    "comment": "缶蹴り(§3、11a §1)。ナツ参加(natsu_today強制true日に12を追加)。FABLE_ANSWERS_19c §1で登載イベント化: fun:kankeri が収穫/焼却された周はイベントごと不発になり、d12_kankeri_gone(跡地断片)に差し替わる(村の演目なので消える)。",
     "script": [
       {"bg":"park_evening","here":"公園"},
       {"n":"缶蹴りは、ルールがところどころ、おれのとこと違った。"},
@@ -40,6 +41,21 @@
       {"diary":{"fact":"鬼のとき、缶を三回ぜんぶ蹴られた。","blackout":"缶を三回ぜんぶ蹴られた","tags":["fun:kankeri"]}},
       {"diary":{"fact":"アイスは、どこにでもある。"}},
       {"diary":{"feeling":"楽しかった。"}}
+    ]
+  },
+  {
+    "id": "d12_kankeri_gone",
+    "kind": "fixed",
+    "day": 12,
+    "slot": "evening",
+    "place": "park",
+    "if": "lost:fun:kankeri",
+    "comment": "缶蹴りの跡地断片(FABLE_ANSWERS_19c §2)。fun:kankeri が食われた周のDay 12夕。混ざらない・混ざりたいとも思わない。理由の説明禁止。日記行なし(混ざらなかったことは思い出にならない)。",
+    "script": [
+      {"bg":"park_evening","here":"公園"},
+      {"n":"公園で、村の子が缶蹴りをしていた。"},
+      {"n":"混ざらなかった。"},
+      {"n":"混ざりたい、と思わなかった。"}
     ]
   }
 ]

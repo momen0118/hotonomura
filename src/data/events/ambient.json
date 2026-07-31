@@ -337,7 +337,7 @@
     "id": "tooriame_body",
     "kind": "fixed",
     "place": "none",
-    "comment": "通り雨の本体(FABLE_ANSWERS_10a §6)。屋外コマの各所から include される。ナツ在(natsu_today)が前提。tooriame_done を立てて一周に一回に制限。",
+    "comment": "通り雨の思い出弾(fun:tooriame・FABLE_ANSWERS_19b §4)。屋外コマの各所から include される。ナツ在(natsu_today)が前提。軒下・前髪ぺったぺたで完結し、家には発展しない(家への入口は「にわか雨」niwaka_ame へ分離。tooriameが食われてもナツの家→ノート分岐→ナツEDの経路は閉じない)。tooriame_done を立てて一周に一回に制限。にわか雨発生周とは同日排他(ラッパー側の !niwaka_done が担う)。",
     "script": [
       {"n":"急に、あたりが暗くなった。"},
       {"c":"ナツ","t":"……くる。"},
@@ -348,39 +348,25 @@
       {"n":"軒下で、ナツが笑いだした。"},
       {"c":"ナツ","t":"{{name}}、前髪。ぺったぺた。"},
       {"c":"{{name}}","t":"ナツもだよ。"},
-      {
-        "comment": "3周目以降+その周でナツと十分過ごした(natsu_ready)+まだナツの家に行っていない周は、本降りになってナツの家へ(FABLE_ANSWERS_17 §1)。natsu_ie が natsu_house を立てるので、以降の通常の締めは !natsu_house で自動的に飛ぶ。"
-      },
-      {"if":"loop>=3 && natsu_ready && !natsu_house","n":"雨は、上がらなかった。"},
-      {"if":"loop>=3 && natsu_ready && !natsu_house","n":"通り雨だと思っていたものが、本降りになった。"},
-      {
-        "if": "loop>=3 && natsu_ready && !natsu_house",
-        "c": "ナツ",
-        "t": "……これはだめだ。{{name}}、うち来る？ すぐそこだから。"
-      },
-      {"if":"loop>=3 && natsu_ready && !natsu_house","include":"natsu_ie"},
-      {"if":"!natsu_house","n":"雨は、十分で上がった。"},
-      {"if":"!natsu_house","n":"上がったあとの道は、土のにおいがした。"},
+      {"n":"雨は、十分で上がった。"},
+      {"n":"上がったあとの道は、土のにおいがした。"},
       {"set":{"tooriame_done":true}},
-      {
-        "if": "!natsu_house",
-        "diary": {"fact":"通り雨にやられた。前髪がぺったぺたになった。","blackout":"通り雨","tags":["fun:tooriame"]}
-      },
-      {"if":"!natsu_house","diary":{"feeling":"ちょっと笑った。"}}
+      {"diary":{"fact":"通り雨にやられた。前髪がぺったぺたになった。","blackout":"通り雨","tags":["fun:tooriame"]}},
+      {"diary":{"feeling":"ちょっと笑った。"}}
     ]
   },
   {
     "id": "amb_tooriame_park",
     "kind": "ambient",
     "place": "park",
-    "if": "day>=9 && natsu_today && !tooriame_done",
+    "if": "day>=9 && natsu_today && !tooriame_done && !niwaka_done",
     "script": [{"bg":"park"},{"include":"tooriame_body"}]
   },
   {
     "id": "amb_tooriame_river",
     "kind": "ambient",
     "place": "river",
-    "if": "day>=9 && natsu_today && !tooriame_done",
+    "if": "day>=9 && natsu_today && !tooriame_done && !niwaka_done",
     "tags": ["place:river"],
     "script": [{"bg":"river"},{"include":"tooriame_body"}]
   },
@@ -388,7 +374,7 @@
     "id": "amb_tooriame_himawari",
     "kind": "ambient",
     "place": "himawari",
-    "if": "day>=9 && natsu_today && !tooriame_done",
+    "if": "day>=9 && natsu_today && !tooriame_done && !niwaka_done",
     "tags": ["place:himawari"],
     "script": [{"bg":"himawari"},{"include":"tooriame_body"}]
   },

@@ -117,11 +117,21 @@ async function gameLoop(state: GameState): Promise<void> {
         state.flags.natsu_days = nd
         if (nd >= 2) state.flags.natsu_ready = true
       }
-      // Day 13朝、ナツED分岐の成立を確定する(ナツの家に行き、ノートを読まなかった周・§17 §2)。
-      if (state.day === 13) {
-        state.flags.natsu_farewell_active = !!state.flags.natsu_house && !state.flags.read_note
-      }
       save(state)
+    }
+
+    // Day 13の残留選択(ナツED)の成立判定は毎コマ再計算する(FABLE_ANSWERS_19d §1)。
+    // ナツの家は当日(Day 13の朝/昼コマ)に発生することもあるため、朝の導入で一度だけ計算すると
+    // 取りこぼす。natsu_house(家に行った)かつ !read_note(ノートを読まなかった)周に成立。
+    if (state.day === 13) {
+      state.flags.natsu_farewell_active = !!state.flags.natsu_house && !state.flags.read_note
+    }
+
+    // 二周目以降の開幕(Day 1夜)の分岐判定(FABLE_ANSWERS_19 §1 / 19a §1)。
+    // 「今日の日付の生きた(破られていない)ページが一枚でもあるか」だけで通常/破り変分を分ける。
+    // 補遺ページも生きたページとして数える(!p.torn がそれを満たす)。前周に補遺があれば通常フロー。
+    if (state.day === 1 && state.loop >= 2) {
+      state.flags.day1_alive = state.diary.some((p) => p.day === 1 && !p.torn)
     }
 
     // 前夜に祠で捧げ/焼きをしていたら、コマ選択の前に「朝、たしかめに行った」を強制再生する
@@ -198,6 +208,26 @@ async function gameLoop(state: GameState): Promise<void> {
     if (place === 'shrine') {
       await setBg(getPlace('shrine')?.bg ?? 'himawari')
       await shrineScreen(state)
+      await finishSlot(state)
+      continue
+    }
+
+    // にわか雨の保証発生(FABLE_ANSWERS_19b §4 / 19d §2)。
+    // 3周目以降・当日ナツ在・ナツと2日以上過ごした(natsu_ready)・まだ家に行っていない・この周未発生。
+    // 条件成立以降の屋外の「自由コマ」を、ナツの家への確定入口(にわか雨→本降り→家)に必ず差し替える。
+    // EDの門を運任せにしないため。固定イベント(タロの死など)のあるコマは侵さない。
+    // 通り雨弾(fun:tooriame)とは別物で、同日排他はラッパー側の !niwaka_done が担う。
+    const niwakaReady =
+      state.loop >= 3 &&
+      state.day >= 9 &&
+      !!state.flags.natsu_today &&
+      !!state.flags.natsu_ready &&
+      !state.flags.natsu_house &&
+      !state.flags.niwaka_done &&
+      ['river', 'park', 'himawari', 'teibou'].includes(place)
+    if (niwakaReady && resolveEvent(state, state.day, state.slot, place)?.kind !== 'fixed') {
+      if (markHimawariVisited && !state.flags.himawari_visited) state.flags.himawari_visited = true
+      await playScene(state, getEvent('niwaka_ame'), { here: getPlace(place)?.name ?? '' })
       await finishSlot(state)
       continue
     }
