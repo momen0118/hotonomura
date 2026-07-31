@@ -7,14 +7,7 @@
     "place": "himawari",
     "if": "!natsu_farewell_active",
     "comment": "最後の日・夕方のひまわり約束→夜(FABLE_ANSWERS_11 §4)。通常周(ナツED条件を満たさない周)。ナツの家に行って読まなかった周は d13_farewell に差し替わる(natsu_farewell_active は main.ts が Day13朝に計算)。本体は d13_body に切り出して共用。",
-    "script": [
-      {"bg":"himawari","here":"ひまわり畑"},
-      {"c":"ナツ","t":"明日、帰るんだよね。"},
-      {"c":"{{name}}","t":"うん。朝のバス。"},
-      {"c":"ナツ","t":"……来年も、来る？"},
-      {"c":"{{name}}","t":"来るよ。"},
-      {"include":"d13_body"}
-    ]
+    "script": [{"include":"d13_open"},{"c":"{{name}}","t":"来るよ。"},{"include":"d13_body"}]
   },
   {
     "id": "d13_farewell",
@@ -25,16 +18,32 @@
     "if": "natsu_farewell_active",
     "comment": "ナツED分岐(FABLE_ANSWERS_17 §2)。ナツの家に行き、ノートを読まなかった周のDay 13夕方。『来るよ。』→通常進行(d13_body)。『…………』→natsu_ed を立て、gameLoop が打ち切って endingFlow のナツEDへ。read_note=true の周は natsu_farewell_active が立たないので、この選択は出ない。",
     "script": [
-      {"bg":"himawari","here":"ひまわり畑"},
-      {"c":"ナツ","t":"明日、帰るんだよね。"},
-      {"c":"{{name}}","t":"うん。朝のバス。"},
-      {"c":"ナツ","t":"……来年も、来る？"},
+      {"include":"d13_open"},
       {
         "choice": [
           {"label":"来るよ。","lines":[{"include":"d13_body"}]},
           {"label":"…………","set":{"natsu_ed":true}}
         ]
       }
+    ]
+  },
+  {
+    "id": "d13_open",
+    "kind": "fixed",
+    "place": "none",
+    "comment": "Day 13夕方の導入(FABLE_ANSWERS_18 §2)。虫とり→笑い→しずかになって「……明日、帰るんだよね。」。d13_evening と d13_farewell の両方の頭から include する。",
+    "script": [
+      {"bg":"himawari","here":"ひまわり畑"},
+      {"n":"最後の日は、ひまわり畑で虫をとった。"},
+      {"n":"ナツが、飛びかけのセミを素手でつかまえて、"},
+      {"n":"つかまえた瞬間に、指のあいだで鳴かれて、取り落とした。"},
+      {"c":"ナツ","t":"うわ、びっくりした！"},
+      {"n":"セミにびっくりする村の子が、おかしくて、笑った。"},
+      {"n":"ナツも笑った。ひまわりのあいだで、ふたりで、けっこう長いこと笑った。"},
+      {"n":"笑い終わったら、すこし、しずかになった。"},
+      {"c":"ナツ","t":"……明日、帰るんだよね。"},
+      {"c":"{{name}}","t":"うん。朝のバス。"},
+      {"c":"ナツ","t":"……来年も、来る？"}
     ]
   },
   {
@@ -74,9 +83,15 @@
         "tags": ["fun:hanabi"]
       },
       {"if":"item:walkie","n":"帰りぎわ、ナツにトランシーバーの片方を渡した。","tags":["fun:hanabi"]},
-      {"if":"item:walkie","c":"{{name}}","t":"夜、これで話せる。……近くじゃないと、だめだけど。","tags":["fun:hanabi"]},
       {"if":"item:walkie","c":"ナツ","t":"なにそれ。……え、いいの？","tags":["fun:hanabi"]},
-      {"if":"item:walkie","n":"布団に入ってすぐ、ザ、と鳴って、声がした。","tags":["fun:hanabi"]},
+      {"if":"item:walkie","c":"{{name}}","t":"片方あっても、しょうがないし。","tags":["fun:hanabi"]},
+      {"if":"item:walkie","c":"ナツ","t":"……ふうん。じゃ、もらう。夜、鳴らすから。","tags":["fun:hanabi"]},
+      {"if":"item:walkie","n":"家に帰って、風呂に入った。","tags":["fun:hanabi"]},
+      {"if":"item:walkie","n":"早めに出た。理由は、ない。","tags":["fun:hanabi"]},
+      {"if":"item:walkie","n":"布団に入って、トランシーバーを枕の横に置いた。","tags":["fun:hanabi"]},
+      {"if":"item:walkie","n":"鳴らなかった。","tags":["fun:hanabi"]},
+      {"if":"item:walkie","n":"置き直した。","tags":["fun:hanabi"]},
+      {"if":"item:walkie","n":"鳴った。","tags":["fun:hanabi"]},
       {"if":"item:walkie","c":"ナツ","t":"まだ起きてる？","tags":["fun:hanabi"]},
       {"if":"item:walkie","c":"{{name}}","t":"起きてる。","tags":["fun:hanabi"]},
       {"if":"item:walkie","c":"ナツ","t":"あしたね、バス、見送りいくから。","tags":["fun:hanabi"]},

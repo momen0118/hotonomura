@@ -48,9 +48,9 @@ export async function endingFlow(state: GameState): Promise<'rewind' | 'ended'> 
       ? 'empty'
       : 'rewind'
 
-  // 荷造り(全分岐共通)
+  // 荷造り。捧げて帰るEDだけ離村の空気の専用版(§9)、ほかは現行の d14_pack。
   clearScreens()
-  await playScene(state, getEvent('d14_pack'), { here: 'じいちゃんの家' })
+  await playScene(state, getEvent(kind === 'offer' ? 'ed_offer_pack' : 'd14_pack'), { here: 'じいちゃんの家' })
   save(state)
 
   if (kind === 'rewind') {
@@ -88,7 +88,7 @@ export async function endingFlow(state: GameState): Promise<'rewind' | 'ended'> 
 
   // 捧げて帰るED
   clearScreens()
-  await playScene(state, getEvent('d14_busstop'), { here: 'バス停' })
+  await playScene(state, getEvent('ed_offer_busstop'), { here: 'バス停' })
   clearScreens()
   await playScene(state, getEvent('ed_offer_bus'), { here: 'バスの中' })
   // 黒は全周で確実にあるが、破れ(焼き)があった周だけ文面を足す(16a §2)。

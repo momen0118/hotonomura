@@ -168,9 +168,9 @@ async function gameLoop(state: GameState): Promise<void> {
     }
 
     let locked = lockedPlace(state.day, state.slot)
-    // 祭り消滅周の Day 6・昼は、集会所(§15a)を通算1回だけ必ず通す。
-    // ナツに連れていかれる一拍なので、初回だけ広場へロックする(以後は自由コマ)。
-    if (dayDef.festival && state.slot === 'noon' && !state.flags.ever_shukaijo) {
+    // 祭り消滅周の Day 6・昼は、集会所(§15a)へ必ず通す(FABLE_ANSWERS_18 §10.2 で毎周発生)。
+    // ナツに連れていかれる一拍なので、広場へロックする。既読スキップで反復のだるさは吸収。
+    if (dayDef.festival && state.slot === 'noon') {
       locked = 'matsuri'
     }
     // himawari 消滅周の Day 5昼はロックを外す(自由コマ)。
