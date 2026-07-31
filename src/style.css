@@ -355,6 +355,29 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
+/* 既読スキップの切り替え(FABLE_ANSWERS_18 §10.5)。テキスト枠の上・右に浮かせる。 */
+.skip-btn {
+  position: absolute;
+  right: 14px;
+  bottom: calc(176px + var(--safe-b));
+  z-index: 6;
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  background: rgba(10, 14, 20, 0.6);
+  color: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+.skip-btn.on {
+  background: rgba(232, 196, 106, 0.92);
+  color: #241d0c;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 .next-mark {
   position: absolute;
   right: 16px;

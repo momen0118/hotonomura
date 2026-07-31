@@ -234,6 +234,11 @@ export interface GameState {
   todayPhoto: PhotoDef | null
   /** 乱数の種。周回ごとに揺らぎを作る */
   seed: number
+  /**
+   * 既読の行(FABLE_ANSWERS_18 §10.5)。キー=話者+本文のハッシュ。周をまたいで持ち越す
+   * (前周で読んだ固定テキストを次周でスキップできる)。巻き戻しでは消さない。
+   */
+  read?: Record<string, number>
   settings: {
     /** 仮テキストの印を表示するか(開発用) */
     showDraftMarks: boolean

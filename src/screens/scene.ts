@@ -18,6 +18,20 @@ interface Frame {
 const backlog: { speaker: string | null; text: string }[] = []
 const BACKLOG_MAX = 200
 
+// 既読スキップ(FABLE_ANSWERS_18 §10.5)。ON のあいだ、既読の行は待たずに送る。
+// 未読の行は普通に表示して止まる(=見たところは飛ばし、新しいところは読む)。
+// 選択肢では止まる。周回を速くするための快適化。ボタン/キー(S)で切り替え。
+let skipMode = false
+const readKey = (speaker: string | null, text: string): string =>
+  String(hashString(`${speaker ?? ''}${text}`))
+function markRead(state: GameState, key: string): void {
+  if (!state.read) state.read = {}
+  state.read[key] = 1
+}
+function isRead(state: GameState, key: string): boolean {
+  return !!state.read && !!state.read[key]
+}
+
 function slotBar(state: GameState, here: string, time?: string): string {
   // 時刻の上書きがあるとき(祭りなど)はコマのドットを出さない
   const dots = time
@@ -58,6 +72,15 @@ export async function playScene(
     e.stopPropagation()
     openBacklog()
   })
+
+  // 既読スキップの切り替えボタン(HUDの有無にかかわらず右下に出す)。
+  const skipBtn = el(`<button class="skip-btn ${skipMode ? 'on' : ''}" data-act="skip">スキップ ⏩</button>`)
+  skipBtn.addEventListener('click', (e) => {
+    e.stopPropagation()
+    skipMode = !skipMode
+    skipBtn.classList.toggle('on', skipMode)
+  })
+  scene.appendChild(skipBtn)
 
   const box = scene.querySelector('.textbox') as HTMLElement
   const hereEl = scene.querySelector('.here') as HTMLElement | null
@@ -159,11 +182,24 @@ function showText(
     box.appendChild(el('<div class="draft-mark">仮</div>'))
   }
 
+  // 既読スキップ(§10.5)。この行が既読かを、表示前に判定してから既読に記録する。
+  const key = readKey(speaker, text)
+  const wasRead = isRead(state, key)
+  markRead(state, key)
+
   // メッセージ枠の高さは固定(本文3行ぶん)。長文は枠を縦に伸ばさず、既存の▼送りで
   // ページ分割して見せる(FABLE_ANSWERS_17 §0)。短い行は1ページなので従来と同じ挙動。
   const pages = paginate(bodyEl, text)
 
   return new Promise((resolve) => {
+    // 既読スキップ中の既読行: 最終ページを一瞬だけ見せて自動送り(待たない)。
+    if (skipMode && wasRead) {
+      bodyEl.textContent = pages[pages.length - 1]
+      nextEl.hidden = false
+      window.setTimeout(resolve, 14)
+      return
+    }
+
     let page = 0
     let idx = 0
     let done = false

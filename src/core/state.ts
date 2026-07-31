@@ -63,6 +63,7 @@ export function newGame(playerName: string, fixed: string[]): GameState {
     todayEntries: [],
     todayPhoto: null,
     seed: Math.floor(Math.random() * 0x7fffffff),
+    read: {},
     settings: { showDraftMarks: true, textSpeed: 22 },
   }
 }
@@ -138,6 +139,7 @@ export function load(): GameState | null {
     if (!raw) return null
     const parsed = JSON.parse(raw) as GameState
     if (parsed.version !== STATE_VERSION) return null
+    if (!parsed.read) parsed.read = {}
     return parsed
   } catch {
     return null
