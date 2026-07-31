@@ -2,6 +2,7 @@ import { app, clearScreens, el, esc, fadeThrough, wait } from '../ui/dom'
 import { setBg } from '../ui/stage'
 import { fill, getDay } from '../core/content'
 import { blackout, isLost } from '../core/tags'
+import { pushLog } from '../core/backlog'
 import type { DiaryEntryDef, DiaryPage, GameState } from '../core/types'
 
 /** 短いテキストを1タップずつ送る(scene 依存を避けるための最小実装。循環 import 回避)。 */
@@ -13,6 +14,8 @@ async function showTextLines(lines: string[]): Promise<void> {
   const body = node.querySelector('.body') as HTMLElement
   for (const text of lines) {
     body.textContent = text
+    // 夜の日記シーン(開幕・書き足し・祭り消滅日の動的日記など)も履歴に残す(FABLE_ANSWERS_19 §5.3)。
+    pushLog(null, text)
     await new Promise<void>((resolve) => {
       const onClick = () => {
         node.removeEventListener('click', onClick)
@@ -144,7 +147,36 @@ export async function writeNightPage(state: GameState): Promise<void> {
   await showNightWrite(state, page)
 }
 
-/** 一周目の夜。白紙に、その日ぶんを自分で書く。 */
+/**
+ * 日記の記入をタイプライター式に一字ずつ出す(FABLE_ANSWERS_19 §5.4)。
+ * 黒塗り(ink)を含む行・空行は一字送りにしない(■を一字ずつ出さない)。
+ */
+async function typeEntries(holder: HTMLElement, state: GameState): Promise<void> {
+  const lis = Array.from(holder.querySelectorAll<HTMLElement>('.entries li'))
+  const speed = Math.max(6, state.settings.textSpeed)
+  for (const li of lis) {
+    if (li.querySelector('.ink') || li.classList.contains('entry-blank')) {
+      await wait(200)
+      continue
+    }
+    const full = li.textContent ?? ''
+    li.textContent = ''
+    await new Promise<void>((resolve) => {
+      let i = 0
+      const timer = window.setInterval(() => {
+        i++
+        li.textContent = full.slice(0, i)
+        if (i >= full.length) {
+          window.clearInterval(timer)
+          resolve()
+        }
+      }, speed)
+    })
+    await wait(140)
+  }
+}
+
+/** 一周目の夜。白紙に、その日ぶんを自分で書く(記入はタイプ演出・FABLE_ANSWERS_19 §5.4)。 */
 async function showNightWrite(state: GameState, page: DiaryPage): Promise<void> {
   const screen = el(`
     <div class="diary-screen">
@@ -155,7 +187,8 @@ async function showNightWrite(state: GameState, page: DiaryPage): Promise<void> 
   `)
   const holder = el('<div style="max-width:460px;width:100%;margin:0 auto"></div>')
   screen.appendChild(holder)
-  holder.appendChild(renderPage(state, page, true))
+  // writeIn=false: CSS のフェード演出は使わず、JS のタイプ演出で一字ずつ出す。
+  holder.appendChild(renderPage(state, page, false))
 
   const footer = el(`
     <div style="max-width:460px;width:100%;margin:18px auto 0">
@@ -171,7 +204,8 @@ async function showNightWrite(state: GameState, page: DiaryPage): Promise<void> 
     { ms: 1000 },
   )
 
-  await wait(500 + Math.max(1, page.entries.length) * 340)
+  await wait(360)
+  await typeEntries(holder, state)
   screen.appendChild(footer)
   await new Promise<void>((resolve) => {
     footer.querySelector('[data-act="close"]')!.addEventListener('click', () => resolve())
@@ -192,6 +226,8 @@ async function showLoopNight(
   // タロ未収穫の周の、特定日の態度差分(FABLE_ANSWERS_13 §3 / 13a §3)。
   const taroAlive = !state.sacrificed.includes('taro')
   let lines: string[]
+  // Day 9夜(タロ存命の周)は翌日ページへのめくりをロックする(FABLE_ANSWERS_19 §5.1)。
+  let lockAfterDay: number | undefined
   if (additions.length > 0) {
     lines = ['書いてないことが、あった。']
   } else if (page.entries.some((e) => !!e.fact && isLost(state, e.tags))) {
@@ -208,6 +244,7 @@ async function showLoopNight(
     lines = ['今日の日記は、もう書いてあった。', 'ナツ、という名前も。', '書いてあったとおりのことを、あの子は言った。']
   } else if (taroAlive && state.day === 9) {
     lines = ['散歩のことも、書いてあった。', 'つぎのページは、めくらないで閉じた。']
+    lockAfterDay = 9
   } else {
     // 「書くことないじゃん」の全文は Day 1夜の開幕に統合済み(FABLE_ANSWERS_18 §6)。
     // 2日目以降の定型は短縮版のみ。
@@ -224,7 +261,7 @@ async function showLoopNight(
   )
   await showTextLines(lines)
   // 「ペンを置いた」日も、その日のページを見せる(FABLE_ANSWERS_18 §10.6)。当日ページを既定表示。
-  await openDiary(state, { day: state.day })
+  await openDiary(state, { day: state.day, lockAfterDay })
 }
 
 /**
@@ -292,8 +329,8 @@ function splitToViews(state: GameState, viewEl: HTMLElement): DiaryView[] {
       views.push({ day: page.day, node: renderPage(state, page) })
       continue
     }
-    // まず丸ごと。収まればそれで1ページ。
-    if (page.entries.length <= 1 || fits(renderPageChunk(state, page, page.entries, { showPhoto: true }))) {
+    // まず丸ごと。収まればそれで1ページ(FABLE_ANSWERS_19b §1: 実寸で必ず測り、あふれたら続きへ流す)。
+    if (fits(renderPageChunk(state, page, page.entries, { showPhoto: true }))) {
       views.push({ day: page.day, node: renderPageChunk(state, page, page.entries, { showPhoto: true }) })
       continue
     }
@@ -323,7 +360,10 @@ function splitToViews(state: GameState, viewEl: HTMLElement): DiaryView[] {
  * めくり形式(単ページ送り)・長い日は続きページ・とじるは固定フッター・破れ跡は在位置表示・
  * 既定は当日ページ(opts.day で上書き可)。
  */
-export function openDiary(state: GameState, opts: { day?: number } = {}): Promise<void> {
+export function openDiary(
+  state: GameState,
+  opts: { day?: number; lockAfterDay?: number } = {},
+): Promise<void> {
   return new Promise((resolve) => {
     const screen = el(`
       <div class="diary-screen paged">
@@ -334,15 +374,18 @@ export function openDiary(state: GameState, opts: { day?: number } = {}): Promis
           <button class="diary-nav" data-act="next">次</button>
           <button class="dev-btn" data-act="close">とじる</button>
         </div>
+        <div class="diary-lock-hint" hidden>……やめとこ。</div>
       </div>
     `)
     const viewEl = screen.querySelector('.diary-view') as HTMLElement
     const ind = screen.querySelector('.diary-ind') as HTMLElement
     const prevBtn = screen.querySelector('[data-act="prev"]') as HTMLButtonElement
     const nextBtn = screen.querySelector('[data-act="next"]') as HTMLButtonElement
+    const lockHint = screen.querySelector('.diary-lock-hint') as HTMLElement
 
     let views: DiaryView[] = []
     let idx = 0
+    let hintTimer = 0
     const show = (): void => {
       viewEl.innerHTML = ''
       viewEl.appendChild(views[idx].node)
@@ -352,10 +395,23 @@ export function openDiary(state: GameState, opts: { day?: number } = {}): Promis
     }
     const go = (d: number): void => {
       const n = idx + d
-      if (n >= 0 && n < views.length) {
-        idx = n
-        show()
+      if (n < 0 || n >= views.length) return
+      // Day 9夜のめくりロック(FABLE_ANSWERS_19 §5.1)。翌日ページへは進ませず「……やめとこ。」を出す。
+      if (
+        d > 0 &&
+        opts.lockAfterDay !== undefined &&
+        views[idx].day <= opts.lockAfterDay &&
+        views[n].day > opts.lockAfterDay
+      ) {
+        lockHint.hidden = false
+        window.clearTimeout(hintTimer)
+        hintTimer = window.setTimeout(() => {
+          lockHint.hidden = true
+        }, 1200)
+        return
       }
+      idx = n
+      show()
     }
     prevBtn.addEventListener('click', (e) => {
       e.stopPropagation()

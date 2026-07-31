@@ -111,9 +111,11 @@ export function recoverFlagsFromDiary(state: GameState): void {
   const has = (needle: string): boolean =>
     state.diary.some((p) => !p.torn && p.entries.some((e) => !!e.fact && e.fact.includes(needle)))
   if (has('古い祠があった')) {
+    // 知識(祠の存在)は回復するが、行先(場所)は回復しない(FABLE_ANSWERS_19 §2)。
+    // 回復≠目撃。その周にひまわり畑を訪ね短縮イベント(himawari_shrine_short)を通ってから、
+    // 祠が行先に追加される(そのイベントが unlock する)。
     state.flags.shrine_found = true
     state.flags.shrine_recovered = true
-    if (!state.places.includes('shrine')) state.places.push('shrine')
   }
   if (has('預かりもの')) {
     state.flags.shelf_seen = true

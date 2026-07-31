@@ -82,6 +82,7 @@
         "photo": {"id":"d13_hanabi","caption":"線香花火と、ナツ。玉が落ちる前。","tags":["fun:hanabi"]},
         "tags": ["fun:hanabi"]
       },
+      {"if":"item:walkie","set":{"walkie_given":true},"tags":["fun:hanabi"]},
       {"if":"item:walkie","n":"帰りぎわ、ナツにトランシーバーの片方を渡した。","tags":["fun:hanabi"]},
       {"if":"item:walkie","c":"ナツ","t":"なにそれ。……え、いいの？","tags":["fun:hanabi"]},
       {"if":"item:walkie","c":"{{name}}","t":"片方あっても、しょうがないし。","tags":["fun:hanabi"]},

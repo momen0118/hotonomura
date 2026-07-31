@@ -163,11 +163,8 @@ async function gameLoop(state: GameState): Promise<void> {
         if (getDay(state.day)) await fadeThrough(() => clearScreens())
         continue
       }
-      // 祭り消滅周。祭りがあったはずの広場を、通常の場所として解禁する。
-      if (!state.places.includes('matsuri')) {
-        state.places.push('matsuri')
-        save(state)
-      }
+      // 祭り消滅周。広場は行先選択に出さない(FABLE_ANSWERS_19 §6)。昼の集会所(§15a)は
+      // 下でコマをロックして必ず通すので、matsuri を places に足す必要はない。
     }
 
     // himawari を失った周は、Day 5昼の「ナツが連れていく」初訪問が起きない(FABLE_ANSWERS_16 §3)。
@@ -206,6 +203,9 @@ async function gameLoop(state: GameState): Promise<void> {
     // 祠は場所として選べる(2周目で発見後)。ここへ行くと「なにを、おいていきますか」が開く。
     // 確認用パネルの「祠をひらく」を正規の導線に置き換えたもの(FABLE_ANSWERS_9 §4)。
     if (place === 'shrine') {
+      // その周に祠を実際に訪れた印(FABLE_ANSWERS_19 §3)。棚の「祠のくぼみの黒を、思い出した。」は
+      // フラグ回復済みでも未訪問の周は出さない=回復≠目撃。巻き戻しでリセットされる。
+      state.flags.shrine_visited_loop = true
       await setBg(getPlace('shrine')?.bg ?? 'himawari')
       await shrineScreen(state)
       await finishSlot(state)

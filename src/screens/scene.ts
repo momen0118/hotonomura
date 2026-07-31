@@ -4,19 +4,13 @@ import { fill, getEvent, visibleLine } from '../core/content'
 import { openDiary } from './diary'
 import { hashString, mulberry32 } from '../core/rng'
 import { applySet, SLOT_LABEL, SLOT_ORDER } from '../core/state'
+import { getBacklog, pushLog } from '../core/backlog'
 import type { ChoiceDef, GameEvent, GameState, Line } from '../core/types'
 
 interface Frame {
   lines: Line[]
   i: number
 }
-
-/**
- * 既読の行。読み返し用。セーブには含めない(その場のログ)。
- * 台詞の鉤括弧は表示上つけない方針なので、ここでも話者名で区別する。
- */
-const backlog: { speaker: string | null; text: string }[] = []
-const BACKLOG_MAX = 200
 
 // 既読スキップ(FABLE_ANSWERS_18 §10.5)。ON のあいだ、既読の行は待たずに送る。
 // 未読の行は普通に表示して止まる(=見たところは飛ばし、新しいところは読む)。
@@ -173,8 +167,7 @@ function showText(
   bodyEl.classList.toggle('talk', isTalk && !line.thought)
   bodyEl.classList.toggle('thought', !!line.thought)
 
-  backlog.push({ speaker, text })
-  if (backlog.length > BACKLOG_MAX) backlog.shift()
+  pushLog(speaker, text)
 
   // 仮テキストの印。Fable の確定稿待ちが一目でわかるようにしておく(開発用)。
   box.querySelector('.draft-mark')?.remove()
@@ -325,7 +318,7 @@ function askChoice(state: GameState, scene: HTMLElement, options: ChoiceDef[]): 
 
 /** 読み返し。1シーンの行数が増えたので、遡れる場所が要る。 */
 export function openBacklog(): void {
-  const rows = backlog
+  const rows = getBacklog()
     .map(
       (b) =>
         `<div class="log-row">${

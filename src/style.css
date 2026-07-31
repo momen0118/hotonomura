@@ -532,6 +532,7 @@ body {
 .diary-screen.paged {
   overflow: hidden;
   padding: 0;
+  position: relative;
 }
 .diary-view {
   flex: 1;
@@ -930,22 +931,56 @@ body {
 }
 
 /* 破られたページ。綴じに紙の縁だけが残り、破り口は焦げる(祠で焼いた印)。 */
+/* 破りとられた日(FABLE_ANSWERS_19 §5.2)。付箋状ではなく、ページと同じ縦サイズの
+   ギザギザ帯+焦げ色の縁+薄く読める日付。1破り=1日ぶんの綴じに残った耳。 */
 .page.torn {
-  min-height: 0;
-  padding: 14px 20px;
+  min-height: 58vh;
+  width: min(300px, 74%);
+  margin: 0 auto;
+  padding: 16px 22px 16px 18px;
   background:
-    linear-gradient(90deg, transparent 30%, rgba(70, 44, 20, 0.5) 40%, transparent 47%),
-    linear-gradient(90deg, var(--paper) 0 8%, rgba(214, 190, 150, 0.4) 30%, transparent 44%);
-  box-shadow: none;
+    linear-gradient(
+      90deg,
+      var(--paper) 0 58%,
+      rgba(120, 82, 40, 0.28) 78%,
+      rgba(66, 40, 18, 0.6) 100%
+    );
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.42);
+  /* 右端(綴じの外側)を縦のギザギザに切る=破りとられた跡。 */
   clip-path: polygon(
-    0 0, 40% 0, 42% 6%, 38% 14%, 43% 22%, 39% 33%, 44% 44%, 38% 56%,
-    43% 68%, 39% 80%, 44% 90%, 40% 100%, 0 100%
+    0 0, 86% 0,
+    80% 3.5%, 88% 7%, 81% 10.5%, 89% 14%, 80% 18%, 88% 21%, 82% 25%,
+    89% 28.5%, 81% 32%, 88% 36%, 80% 40%, 89% 43.5%, 82% 47%, 88% 51%,
+    81% 55%, 89% 58%, 80% 62%, 88% 66%, 82% 69.5%, 89% 73%, 81% 77%,
+    88% 80.5%, 80% 84.5%, 89% 88%, 82% 92%, 88% 95.5%, 83% 100%,
+    0 100%
   );
 }
 .page.torn .page-date {
   border-bottom: none;
-  margin-bottom: 0;
-  opacity: 0.45;
+  margin-bottom: 10px;
+  opacity: 0.4;
+}
+.page.torn .torn-note {
+  color: rgba(66, 40, 18, 0.5);
+}
+
+/* Day 9夜など、翌日へめくらせない夜の合図(FABLE_ANSWERS_19 §5.1)。
+   絶対配置で、続きページの実寸測定(splitToViews)に影響しないようにする。 */
+.diary-lock-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 74px;
+  text-align: center;
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+.diary-lock-hint[hidden] {
+  display: none;
 }
 
 /* 撮らなかった日。糊の跡は出さない(捧げて消えた欠損と見分けがつくこと)。 */
