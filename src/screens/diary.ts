@@ -25,53 +25,55 @@ async function showTextLines(lines: string[]): Promise<void> {
 }
 
 /**
- * 日記の1ページを描く。
- * 捧げられたタグを持つ行は消さずに黒く塗る。写真は糊の跡だけ残す(SPEC.md §3)。
+ * 日記の1ページ(まるごと)を描く。夜の書きおろし・祠のリストなど、1ページを丸ごと出す用途。
+ * めくりUIの続きページは renderPageChunk を使う。
  */
 export function renderPage(state: GameState, page: DiaryPage, writeIn = false): HTMLElement {
-  // 破られたページ。綴じに紙の縁だけが残る。
   if (page.torn) {
     return el(`
       <div class="page torn">
         <div class="page-date"><span>${page.day}日目　${esc(page.date)}</span></div>
+        <p class="torn-note">やぶった跡。</p>
       </div>
     `)
   }
+  return renderPageChunk(state, page, page.entries, { showPhoto: true, writeIn })
+}
 
+/**
+ * ページの一部(行の部分集合)を描く。長い日を続きページに割るためのもの(FABLE_ANSWERS_18 日記UI)。
+ * cont=true は「(続き)」表示・写真なし。捧げられたタグの行は黒く塗る(SPEC.md §3)。
+ */
+export function renderPageChunk(
+  state: GameState,
+  page: DiaryPage,
+  entries: DiaryEntryDef[],
+  opts: { showPhoto?: boolean; cont?: boolean; writeIn?: boolean } = {},
+): HTMLElement {
   const photoLost = page.photo ? isLost(state, page.photo.tags) : false
   const photoClass = page.photo?.none ? ' none' : photoLost ? ' lost' : ''
-  const photoHtml = page.photo
-    ? `<div class="photo${photoClass}">${photoLost ? '' : esc(fill(state, page.photo.caption))}</div>`
-    : ''
+  const photoHtml =
+    opts.showPhoto && page.photo
+      ? `<div class="photo${photoClass}">${photoLost ? '' : esc(fill(state, page.photo.caption))}</div>`
+      : ''
 
-  // 黒塗り規則v2: 行は消さない。日は縮まない。塗るのは指定された語だけ。
-  // たこ焼き型は対象語だけ、生き物型は名前+種別まで——黒の面積が重さを語る。
-  // 日記だけが正直で、世界と写真は素知らぬ顔をする。
-  const rendered = page.entries.map((e) => {
+  const rendered = entries.map((e) => {
     const factText = e.fact ? fill(state, e.fact) : ''
     const factHtml =
       factText && isLost(state, e.tags)
-        ? esc(blackout(factText, e.blackout)).replace(
-            /■+/g,
-            (bar) => `<span class="ink">${bar}</span>`,
-          )
+        ? esc(blackout(factText, e.blackout)).replace(/■+/g, (bar) => `<span class="ink">${bar}</span>`)
         : esc(factText)
     const feeling = e.feeling ? esc(fill(state, e.feeling)) : ''
-    // 予記にない書き足しは余白に足された行(周が進むほどページが混む)。
     return `<li class="${e.handwritten ? 'added' : ''}">${factHtml}${feeling}</li>`
   })
-
-  const entries = rendered.length
-    ? rendered.join('')
-    : '<li class="entry-blank">(なにも書いていない)</li>'
+  const list = rendered.length ? rendered.join('') : '<li class="entry-blank">(なにも書いていない)</li>'
+  const cont = opts.cont ? '<span class="cont">(つづき)</span>' : ''
 
   return el(`
     <div class="page">
-      <div class="page-date">
-        <span>${page.day}日目　${esc(page.date)}</span>
-      </div>
+      <div class="page-date"><span>${page.day}日目　${esc(page.date)}</span>${cont}</div>
       ${photoHtml}
-      <ul class="entries ${writeIn ? 'write-in' : ''}">${entries}</ul>
+      <ul class="entries ${opts.writeIn ? 'write-in' : ''}">${list}</ul>
     </div>
   `)
 }
@@ -111,6 +113,11 @@ export async function writeNightPage(state: GameState): Promise<void> {
     state.todayPhoto = null
     // Day 1 は開幕イベント(§2)が日記を見せるので、夜画面は出さない。
     if (state.day === 1) return
+    // 祭り消滅周の Day 6夜は、八月十五日のページを開いて残った品目を読む夜に(FABLE_ANSWERS_18 §7)。
+    if (state.day === 6 && isLost(state, ['fun:matsuri'])) {
+      await matsuriGoneNight(state)
+      return
+    }
     await showLoopNight(state, last, additions)
     return
   }
@@ -206,41 +213,171 @@ async function showLoopNight(
     { ms: 1000 },
   )
   await showTextLines(lines)
-  // 差分があった夜だけ、書き足しの見えるページを開く。
-  if (additions.length > 0) await openDiary(state)
+  // 「ペンを置いた」日も、その日のページを見せる(FABLE_ANSWERS_18 §10.6)。当日ページを既定表示。
+  await openDiary(state, { day: state.day })
 }
 
-/** いつでも読み返せる日記帳。 */
-export function openDiary(state: GameState): Promise<void> {
+/**
+ * 祭り消滅周の Day 6夜(FABLE_ANSWERS_18 §7)。八月十五日のページを開き、黒く残った品目を読む。
+ * 品目は 8月15日ページの「無傷の(捧げられていない)品目行」から実際に2つ引く。
+ * 無傷の品目が無い周はフォールバック(ほとんど黒いページ)。
+ */
+async function matsuriGoneNight(state: GameState): Promise<void> {
+  const page = state.diary.find((p) => p.day === 6 && !p.torn)
+  const intact = (page?.entries ?? [])
+    .filter((e) => !!e.fact && !!e.tags && e.tags.length > 0 && !isLost(state, e.tags))
+    .map((e) => e.blackout ?? e.fact ?? '')
+    .filter((s) => s.length > 0)
+
+  let lines: string[]
+  if (intact.length >= 1) {
+    lines = [
+      '夜、日記に書こうとして、八月十五日のページをひらいた。',
+      intact.slice(0, 2).join('。') + '。',
+      '読める行を、読んだ。',
+      '……これ、どこの話だ？',
+      '祭り、みたいだ。',
+      '祭りは、ないのに。',
+      '黒く塗られたところを、しばらく見ていた。',
+      '見ていても、読めるようには、ならなかった。',
+    ]
+  } else {
+    lines = [
+      '八月十五日のページは、ほとんど黒かった。',
+      '「ぜんぶは回れなかった。」',
+      'それだけが、読めた。',
+      'なにを、回れなかったんだ？',
+    ]
+  }
+
+  await fadeThrough(
+    async () => {
+      clearScreens()
+      await setBg('engawa_night')
+    },
+    { ms: 1000 },
+  )
+  await showTextLines(lines)
+  // 八月十五日のページを開いて見せる(その周に読んだ日付を既定表示)。
+  await openDiary(state, { day: 6 })
+}
+
+interface DiaryView {
+  day: number
+  node: HTMLElement
+  empty?: boolean
+}
+
+/** 1ページに収まらない長い日を、行を割って続きページにする(measure で実寸判定)。 */
+function splitToViews(state: GameState, viewEl: HTMLElement): DiaryView[] {
+  const pages = [...state.diary].sort((a, b) => a.day - b.day)
+  const views: DiaryView[] = []
+  const fits = (node: HTMLElement): boolean => {
+    viewEl.innerHTML = ''
+    viewEl.appendChild(node)
+    return node.scrollHeight <= viewEl.clientHeight + 1
+  }
+  for (const page of pages) {
+    if (page.torn) {
+      views.push({ day: page.day, node: renderPage(state, page) })
+      continue
+    }
+    // まず丸ごと。収まればそれで1ページ。
+    if (page.entries.length <= 1 || fits(renderPageChunk(state, page, page.entries, { showPhoto: true }))) {
+      views.push({ day: page.day, node: renderPageChunk(state, page, page.entries, { showPhoto: true }) })
+      continue
+    }
+    // あふれるので、頭から入るだけ入れて続きページに送る。
+    let rest = page.entries.slice()
+    let first = true
+    while (rest.length > 0) {
+      let k = rest.length
+      while (k > 1) {
+        if (fits(renderPageChunk(state, page, rest.slice(0, k), { showPhoto: first, cont: !first }))) break
+        k--
+      }
+      views.push({
+        day: page.day,
+        node: renderPageChunk(state, page, rest.slice(0, k), { showPhoto: first, cont: !first }),
+      })
+      rest = rest.slice(k)
+      first = false
+    }
+  }
+  viewEl.innerHTML = ''
+  return views
+}
+
+/**
+ * いつでも読み返せる日記帳(FABLE_ANSWERS_18 日記UI改修)。
+ * めくり形式(単ページ送り)・長い日は続きページ・とじるは固定フッター・破れ跡は在位置表示・
+ * 既定は当日ページ(opts.day で上書き可)。
+ */
+export function openDiary(state: GameState, opts: { day?: number } = {}): Promise<void> {
   return new Promise((resolve) => {
     const screen = el(`
-      <div class="diary-screen">
-        <div class="diary-bar">
-          <div class="diary-bar-inner">
-            <p class="head" style="margin:0">日記</p>
-            <button class="dev-btn" data-act="close">とじる</button>
-          </div>
+      <div class="diary-screen paged">
+        <div class="diary-view"></div>
+        <div class="diary-footer">
+          <button class="diary-nav" data-act="prev" aria-label="前のページ">◀</button>
+          <span class="diary-ind"></span>
+          <button class="diary-nav" data-act="next" aria-label="次のページ">▶</button>
+          <button class="dev-btn" data-act="close">とじる</button>
         </div>
       </div>
     `)
-    const holder = el('<div style="max-width:460px;width:100%;margin:0 auto"></div>')
-    screen.appendChild(holder)
+    const viewEl = screen.querySelector('.diary-view') as HTMLElement
+    const ind = screen.querySelector('.diary-ind') as HTMLElement
+    const prevBtn = screen.querySelector('[data-act="prev"]') as HTMLButtonElement
+    const nextBtn = screen.querySelector('[data-act="next"]') as HTMLButtonElement
 
-    if (state.diary.length === 0) {
-      holder.appendChild(el('<p class="hint" style="text-align:center">まだ一日も終わっていない。</p>'))
-    } else {
-      // 日付順に(周をまたいでも一冊・日付固定)。
-      const pages = [...state.diary].sort((a, b) => a.day - b.day)
-      for (const page of pages) holder.appendChild(renderPage(state, page))
+    let views: DiaryView[] = []
+    let idx = 0
+    const show = (): void => {
+      viewEl.innerHTML = ''
+      viewEl.appendChild(views[idx].node)
+      ind.textContent = views[idx].empty ? '' : `${idx + 1} / ${views.length}`
+      prevBtn.disabled = idx === 0
+      nextBtn.disabled = idx === views.length - 1
     }
-
+    const go = (d: number): void => {
+      const n = idx + d
+      if (n >= 0 && n < views.length) {
+        idx = n
+        show()
+      }
+    }
+    prevBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      go(-1)
+    })
+    nextBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      go(1)
+    })
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'ArrowLeft') go(-1)
+      else if (e.key === 'ArrowRight') go(1)
+    }
+    window.addEventListener('keydown', onKey)
     screen.querySelector('[data-act="close"]')!.addEventListener('click', () => {
+      window.removeEventListener('keydown', onKey)
       screen.remove()
       resolve()
     })
-    // 日記への遷移はフェード必須(FABLE_ANSWERS_12 §4.1)。
+
+    // 日記への遷移はフェード必須(FABLE_ANSWERS_12 §4.1)。DOM に載せてから実寸で割る。
     void fadeThrough(() => {
       app.appendChild(screen)
+      views = splitToViews(state, viewEl)
+      if (views.length === 0) {
+        views = [{ day: 0, empty: true, node: el('<p class="hint" style="margin:auto;text-align:center">まだ一日も終わっていない。</p>') }]
+      }
+      // 既定は当日ページ(opts.day 優先)。無ければ最後のページ。
+      const target = opts.day ?? state.day
+      const found = views.findIndex((v) => v.day === target)
+      idx = found >= 0 ? found : views.length - 1
+      show()
     }, { ms: 360 })
   })
 }

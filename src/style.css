@@ -523,6 +523,68 @@ body {
   align-items: center;
 }
 
+/* めくり形式の日記(FABLE_ANSWERS_18 日記UI)。単ページ表示・下に固定フッター。 */
+.diary-screen.paged {
+  overflow: hidden;
+  padding: 0;
+}
+.diary-view {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 14px 12px;
+}
+.diary-view .page {
+  margin: 0 auto;
+}
+.diary-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px calc(10px + var(--safe-b));
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0a0a0c;
+}
+.diary-nav {
+  font: inherit;
+  font-size: 1rem;
+  min-width: 46px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(20, 24, 30, 0.72);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+}
+.diary-nav:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+.diary-ind {
+  flex: 1;
+  text-align: center;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  opacity: 0.72;
+}
+.diary-footer [data-act="close"] {
+  margin-left: auto;
+}
+.page-date .cont {
+  font-size: 0.68rem;
+  opacity: 0.55;
+  letter-spacing: 0.1em;
+}
+.torn-note {
+  font-size: 0.82rem;
+  opacity: 0.5;
+  margin-top: 10px;
+}
+
 .page {
   background: var(--paper);
   color: var(--ink);

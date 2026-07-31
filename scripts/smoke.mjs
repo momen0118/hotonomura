@@ -176,11 +176,34 @@ const openDiaryFromDev = async () => {
   await page.waitForTimeout(500)
 }
 
-await openDiaryFromDev()
-const before = {
-  lines: await page.$$eval('.entries li', (n) => n.length),
-  text: await page.$eval('.diary-screen', (n) => n.innerText),
+// めくり形式(単ページ表示)なので、全ページをたどって集計する。
+const collectDiary = async () => {
+  // まず先頭ページへ。
+  for (let i = 0; i < 80; i++) {
+    const p = await page.$('.diary-footer [data-act="prev"]:not([disabled])')
+    if (!p) break
+    await p.click()
+    await page.waitForTimeout(50)
+  }
+  let text = ''
+  let lines = 0
+  const ink = []
+  let lostPhotos = 0
+  for (let i = 0; i < 120; i++) {
+    text += '\n' + (await page.$eval('.diary-view', (n) => n.innerText).catch(() => ''))
+    lines += await page.$$eval('.diary-view .entries li', (n) => n.length).catch(() => 0)
+    ink.push(...(await page.$$eval('.diary-view .ink', (n) => n.map((x) => x.textContent)).catch(() => [])))
+    lostPhotos += await page.$$eval('.diary-view .photo.lost', (n) => n.length).catch(() => 0)
+    const nx = await page.$('.diary-footer [data-act="next"]:not([disabled])')
+    if (!nx) break
+    await nx.click()
+    await page.waitForTimeout(50)
+  }
+  return { text, lines, ink, lostPhotos }
 }
+
+await openDiaryFromDev()
+const before = await collectDiary()
 await page.click('.diary-screen [data-act="close"]')
 await page.waitForTimeout(300)
 
@@ -200,12 +223,9 @@ await page.click('.dev-panel [data-role="misc"] .btn')
 await page.waitForTimeout(600)
 await shot('92-diary-redacted')
 
-const after = {
-  lines: await page.$$eval('.entries li', (n) => n.length),
-  text: await page.$eval('.diary-screen', (n) => n.innerText),
-}
-const inked = await page.$$eval('.ink', (n) => n.map((x) => x.textContent))
-const lostPhotos = await page.$$eval('.photo.lost', (n) => n.length)
+const after = await collectDiary()
+const inked = after.ink
+const lostPhotos = after.lostPhotos
 
 console.log('日記の行数 捧げる前/後:', before.lines, '/', after.lines)
 console.log('■化された語:', inked)
