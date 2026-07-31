@@ -96,6 +96,32 @@ export function rewind(state: GameState, initialPlaces: string[]): void {
   state.money = 0
   state.stallsVisited = []
   state.places = [...initialPlaces]
+  // 周の開始時に、日記の書き足しから進行フラグを自動回復する(FABLE_ANSWERS_18 §8)。
+  // 「日記に見えている情報は次周のソラも知っている」——黒塗りシステムの信頼を保つための原則。
+  // これで祠・棚・餌を毎周たどり直す必要がなくなる(2コマ問題・ミスリード詰みの解消)。
+  recoverFlagsFromDiary(state)
+}
+
+/**
+ * 日記の(破られていない)書き足しを見て、対応する進行フラグを立て直す(FABLE_ANSWERS_18 §8)。
+ * *_recovered は「前周までに知った=短縮版の演出だけ流す」目印。フル発見は書き足しが無い周だけ。
+ */
+export function recoverFlagsFromDiary(state: GameState): void {
+  const has = (needle: string): boolean =>
+    state.diary.some((p) => !p.torn && p.entries.some((e) => !!e.fact && e.fact.includes(needle)))
+  if (has('古い祠があった')) {
+    state.flags.shrine_found = true
+    state.flags.shrine_recovered = true
+    if (!state.places.includes('shrine')) state.places.push('shrine')
+  }
+  if (has('預かりもの')) {
+    state.flags.shelf_seen = true
+    state.flags.shelf_recovered = true
+  }
+  if (has('食いつかない')) {
+    state.flags.bait_heard = true
+    state.flags.bait_recovered = true
+  }
 }
 
 export function save(state: GameState): void {

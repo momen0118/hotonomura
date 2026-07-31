@@ -3,8 +3,8 @@
     "id": "himawari_shrine",
     "kind": "fixed",
     "place": "himawari",
-    "if": "loop>=2 && !shrine_found && !ever_shrine_found",
-    "comment": "祠の初回発見(FABLE_ANSWERS_9 §4)。ever_shrine_found を立て、次周以降は短縮版(himawari_shrine_short)で高速再取得(14便 Q1)。",
+    "if": "loop>=2 && !shrine_found && himawari_visited",
+    "comment": "祠の初回発見(FABLE_ANSWERS_9 §4 / 18 §10.1)。ひまわり畑の初訪問の翌日以降(himawari_visited=一度でも畑に入った後)。書き足しを残し、次周以降は state.recoverFlagsFromDiary が shrine_found を自動回復する(§8)。回復済みの周は短縮版が演出だけ流す。",
     "script": [
       {"bg":"himawari","here":"ひまわり畑"},
       {"n":"ひまわり畑は、今日も黄色かった。"},
@@ -33,9 +33,9 @@
               {"n":"だれが掃除しているんだろう。"},
               {"n":"だれが、なにを、焦がしたんだろう。"},
               {"n":"風で、うしろのひまわりが、いっせいに鳴った。"},
-              {"set":{"shrine_found":true,"ever_shrine_found":true}},
+              {"set":{"shrine_found":true}},
               {"unlock":["shrine"]},
-              {"diary":{"fact":"ひまわり畑の奥で、古い祠を見つけた。"}}
+              {"diary":{"fact":"ひまわりの向いているほうへ歩いたら、山の中に古い祠があった。"}}
             ]
           },
           {"label":"やめておく","lines":[{"n":"引き返した。"}]}
@@ -47,24 +47,23 @@
     "id": "himawari_shrine_short",
     "kind": "fixed",
     "place": "himawari",
-    "if": "loop>=2 && !shrine_found && ever_shrine_found",
-    "comment": "祠の高速再取得(FABLE_ANSWERS_14 Q1)。日記に書き足しがある周(ever_shrine_found)は、ソラが記録に導かれて同じ道をなぞる。1コマで解禁。書き足しは既にあるので追加しない。",
+    "if": "shrine_recovered",
+    "once": true,
+    "comment": "祠の演出だけの短縮版(FABLE_ANSWERS_18 §8)。回復済み(shrine_recovered)の周、畑の初訪問で一度流す。進行フラグは §8 の回復が周頭で立てているので、ここでは set しない。",
     "script": [
       {"bg":"himawari","here":"ひまわり畑"},
       {"n":"日記に、書いてあったとおりに歩いた。"},
       {"n":"ひまわりの向いているほうへ。"},
       {"bg":"shrine","here":"祠"},
-      {"n":"祠は、書いてあったとおりの場所に、あった。"},
-      {"set":{"shrine_found":true}},
-      {"unlock":["shrine"]}
+      {"n":"祠は、書いてあったとおりの場所に、あった。"}
     ]
   },
   {
     "id": "shop_shelf",
     "kind": "fixed",
     "place": "shop",
-    "if": "loop>=3 && met_mitsuko && !shelf_seen && !ever_shelf_seen",
-    "comment": "商店の奥の棚・初回(FABLE_ANSWERS_9 §5 / 13 §4)。3周目以降+その周の商店2回目以降(met_mitsuko=初回来店済み)。ever_shelf_seen を立て、次周は短縮版へ。最終行『祠のくぼみの黒を〜』は祠発見済みの周のみ。",
+    "if": "loop>=3 && met_mitsuko && !shelf_seen",
+    "comment": "商店の奥の棚・初回(FABLE_ANSWERS_9 §5 / 13 §4)。3周目以降+その周の商店2回目以降(met_mitsuko=初回来店済み)。書き足しを残し、次周以降は §8 の回復が shelf_seen を自動で立てる。最終行『祠のくぼみの黒を〜』は祠発見済みの周のみ。",
     "script": [
       {"bg":"shop","here":"商店"},
       {"n":"商店の奥に、ガラス戸の棚があった。"},
@@ -88,7 +87,7 @@
               {"n":"どれにも、うっすら、焦げたあとがあった。"},
               {"n":"同じところに。同じくらい。"},
               {"if":"shrine_found","n":"祠のくぼみの黒を、思い出した。"},
-              {"set":{"shelf_seen":true,"ever_shelf_seen":true}},
+              {"set":{"shelf_seen":true}},
               {"diary":{"fact":"商店の奥の棚に、預かりものがならんでいた。ぜんぶ、焦げていた。"}}
             ]
           },
@@ -101,21 +100,17 @@
     "id": "shop_shelf_short",
     "kind": "fixed",
     "place": "shop",
-    "if": "met_mitsuko && !shelf_seen && ever_shelf_seen",
-    "comment": "棚の高速再取得(14便 Q1)。日記に書き足しがある周は短縮。1コマで shelf_seen。",
-    "script": [
-      {"bg":"shop","here":"商店"},
-      {"n":"商店の奥の、ガラス戸の棚。"},
-      {"n":"預かりものは、今日も、焦げていた。"},
-      {"set":{"shelf_seen":true}}
-    ]
+    "if": "shelf_recovered && met_mitsuko",
+    "once": true,
+    "comment": "棚の演出だけの短縮版(FABLE_ANSWERS_18 §8)。回復済み(shelf_recovered)の周、来店時に一度流す。進行フラグは §8 の回復が周頭で立てているので set しない。",
+    "script": [{"bg":"shop","here":"商店"},{"n":"商店の奥の、ガラス戸の棚。"},{"n":"預かりものは、今日も、焦げていた。"}]
   },
   {
     "id": "teibou_bait",
     "kind": "fixed",
     "place": "teibou",
-    "if": "loop>=3 && shelf_seen && !bait_heard && !ever_bait_heard",
-    "comment": "餌の台詞・初回(FABLE_ANSWERS_10 §5 / 13a §4)。3周目以降・shelf_seen後・プレイヤーが自分で堤防コマを選んだとき(Day 11のロックではなく自由コマ)。焼き回数は無関係(昔話とは別系統)。ever_bait_heard を立て、次周は短縮版へ。本作唯一の攻略ヒント。",
+    "if": "shelf_seen && !bait_heard",
+    "comment": "餌の台詞・初回(FABLE_ANSWERS_10 §5 / 13a §4 / 18 §8)。shelf_seen後・プレイヤーが自分で堤防コマを選んだとき。書き足しを残し、次周以降は §8 の回復が bait_heard を自動で立てる(餌の再聴取は不要=2コマ問題の解消)。本作唯一の攻略ヒント。",
     "script": [
       {"bg":"river","here":"堤防"},
       {"c":"ツリさん","t":"……坊主。"},
@@ -127,22 +122,22 @@
       {"c":"ツリさん","t":"……それだけだ。"},
       {"n":"竿は、動かなかった。バケツの水も。"},
       {"n":"それだけ、らしかった。"},
-      {"set":{"bait_heard":true,"ever_bait_heard":true}},
-      {"diary":{"fact":"ツリさんが、餌の話をしてくれた。意味は、わからなかった。"}}
+      {"set":{"bait_heard":true}},
+      {"diary":{"fact":"堤防のツリさんが言った。餌は、こっちの水で育ったものじゃ食いつかない、って。意味は、まだわからない。"}}
     ]
   },
   {
     "id": "teibou_bait_short",
     "kind": "fixed",
     "place": "teibou",
-    "if": "shelf_seen && !bait_heard && ever_bait_heard",
-    "comment": "餌の高速再取得(14便 Q1)。ツリさんは自分が話したか覚えていない(演出・意図的)。理由の説明・独白は付けない。",
+    "if": "bait_recovered",
+    "once": true,
+    "comment": "餌の演出だけの短縮版(FABLE_ANSWERS_18 §8)。回復済み(bait_recovered)の周、堤防に来たとき一度流す。ツリさんは自分が話したか覚えていない(演出・意図的)。進行フラグは §8 の回復が周頭で立てているので set しない。",
     "script": [
       {"bg":"river","here":"堤防"},
       {"c":"ツリさん","t":"……坊主。餌の話は、したか。"},
       {"c":"{{name}}","t":"……え？"},
-      {"c":"ツリさん","t":"こっちの水で育ったもんじゃ、食いつかん。……それだけだ。"},
-      {"set":{"bait_heard":true}}
+      {"c":"ツリさん","t":"こっちの水で育ったもんじゃ、食いつかん。……それだけだ。"}
     ]
   },
   {
@@ -174,7 +169,7 @@
       {"c":"{{name}}","t":"……うん。へんだね。"},
       {"n":"へんだね、と言った声が、じぶんでもわかるくらい、うわずっていた。"},
       {"set":{"ever_natsu_mukashi":true}},
-      {"diary":{"fact":"ナツが、旅の人の昔話をしてくれた。"}}
+      {"diary":{"fact":"ナツの昔話。よそから持ってきた大事な物を山の神様にあげたら、旅の人は帰れたんだって。"}}
     ]
   }
 ]

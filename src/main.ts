@@ -189,6 +189,9 @@ async function gameLoop(state: GameState): Promise<void> {
       save(state)
     }
     clearScreens()
+    // ひまわり畑を一度でも訪れたか(祠発見の「初訪問の翌日以降」条件・FABLE_ANSWERS_18 §10.1)。
+    // このコマの himawari イベントの後に立つので、祠発見はこの周の次のひまわり来訪から。
+    const markHimawariVisited = place === 'himawari'
 
     // 祠は場所として選べる(2周目で発見後)。ここへ行くと「なにを、おいていきますか」が開く。
     // 確認用パネルの「祠をひらく」を正規の導線に置き換えたもの(FABLE_ANSWERS_9 §4)。
@@ -219,6 +222,13 @@ async function gameLoop(state: GameState): Promise<void> {
     } else {
       // データがまだ無いコマ。縦切り中は起こりうるので、黙って一コマ進める。
       await emptySlot()
+    }
+
+    // ひまわり畑の来訪を記録(祠発見の翌日以降条件・§10.1)。イベントの後なので、
+    // この周でひまわりに入った次の来訪から himawari_shrine が発火する。
+    if (markHimawariVisited && !state.flags.himawari_visited) {
+      state.flags.himawari_visited = true
+      save(state)
     }
 
     // ナツED(§17 §2): Day 13夕方の「…………」で natsu_ed が立ったら、通常進行を打ち切って
