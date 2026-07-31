@@ -311,8 +311,13 @@ body {
   position: relative;
 }
 
+/* 話者名の行は常に同じ高さで確保する(地の文でも空のまま。名前の有無で枠が伸縮しない
+   ・FABLE_ANSWERS_18a §2)。高さと行送りを固定して、空・名前あり・長い名前で差が出ないようにする。 */
 .speaker {
-  display: inline-block;
+  display: block;
+  height: 1.4em;
+  line-height: 1.4em;
+  overflow: hidden;
   font-size: 0.82rem;
   letter-spacing: 0.1em;
   color: var(--accent);

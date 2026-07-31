@@ -7,7 +7,7 @@ import type { DiaryEntryDef, DiaryPage, GameState } from '../core/types'
 /** 短いテキストを1タップずつ送る(scene 依存を避けるための最小実装。循環 import 回避)。 */
 async function showTextLines(lines: string[]): Promise<void> {
   const node = el(
-    '<div class="scene"><div class="textbox"><div class="speaker" hidden></div><div class="body"></div><div class="next-mark"></div></div></div>',
+    '<div class="scene"><div class="textbox"><div class="speaker"></div><div class="body"></div><div class="next-mark"></div></div></div>',
   )
   app.appendChild(node)
   const body = node.querySelector('.body') as HTMLElement
@@ -319,9 +319,9 @@ export function openDiary(state: GameState, opts: { day?: number } = {}): Promis
       <div class="diary-screen paged">
         <div class="diary-view"></div>
         <div class="diary-footer">
-          <button class="diary-nav" data-act="prev" aria-label="前のページ">◀</button>
+          <button class="diary-nav" data-act="prev">前</button>
           <span class="diary-ind"></span>
-          <button class="diary-nav" data-act="next" aria-label="次のページ">▶</button>
+          <button class="diary-nav" data-act="next">次</button>
           <button class="dev-btn" data-act="close">とじる</button>
         </div>
       </div>

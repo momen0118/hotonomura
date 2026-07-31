@@ -60,7 +60,7 @@ export async function playScene(
     <div class="scene">
       ${hud ? slotBar(state, opts.here ?? '', opts.time) : ''}
       <div class="textbox">
-        <div class="speaker" hidden></div>
+        <div class="speaker"></div>
         <div class="body"></div>
         <div class="next-mark" hidden></div>
       </div>
@@ -74,7 +74,7 @@ export async function playScene(
   })
 
   // 既読スキップの切り替えボタン(HUDの有無にかかわらず右下に出す)。
-  const skipBtn = el(`<button class="skip-btn ${skipMode ? 'on' : ''}" data-act="skip">スキップ ⏩</button>`)
+  const skipBtn = el(`<button class="skip-btn ${skipMode ? 'on' : ''}" data-act="skip">スキップ</button>`)
   skipBtn.addEventListener('click', (e) => {
     e.stopPropagation()
     skipMode = !skipMode
@@ -167,9 +167,9 @@ function showText(
   const text = fill(state, (isTalk ? line.t : line.n) ?? '')
   const speaker = isTalk && line.c ? fill(state, line.c) : null
 
-  // 話者名は毎行かならず入れ替える。地の文・独白では空にして隠す(残留対策)
+  // 話者名は毎行かならず入れ替える。地の文でも行の高さは確保したまま(名前は空・FABLE_ANSWERS_18a §2)。
+  // 枠の高さを常に「話者名行+本文3行」に固定して、縦伸び・スキップボタンとの隙間の変動を消す。
   speakerEl.textContent = speaker ?? ''
-  speakerEl.hidden = speaker === null
   bodyEl.classList.toggle('talk', isTalk && !line.thought)
   bodyEl.classList.toggle('thought', !!line.thought)
 
